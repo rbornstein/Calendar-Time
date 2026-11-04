@@ -29,6 +29,8 @@ Live page: https://claude.ai/artifact/RBFSvFPhzKhjNqMdxM6wiW (source: `index.htm
   - Travel by Uber both ways.
   - Shower: needed after class; length and where (gym or home) not decided yet.
 - Travel time connectors: Uber (price/time estimates, probably "now" only) and TomTom Maps or Mapbox (traffic-aware routing for later departure times). Add them to the page's `mcp` capability once connected.
+  - Uber connector tested Nov 4 2026 (`get_estimates_between_two_locations_claude`, home → UTC club): it worked, but the result only shows an interactive widget in chat. Claude gets back the names of the two places and no price, ETA, or ride time. It also only covers rides right now (no future times). So it can't feed the trip math. Use it for booking links only; ride times have to come from a routing connector (TomTom/Mapbox).
+  - Uber matched "9165 Pharmacy Dr" to "9165 Pharmacy Ln". Check the pickup pin in the widget.
 
 ## Later
 - ClassPass cycling classes within 10 miles of 9450 Gilman Dr. ClassPass blocks automated access, so this needs the user's own browser (Claude in Chrome or the Claude desktop app) or pasted results.
