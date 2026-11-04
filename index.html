@@ -412,7 +412,9 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       hours: parseHours({ mon: [["06:00", "13:00"], ["15:00", "20:00"]], tue: [["06:00", "13:00"], ["15:00", "20:00"]], wed: [["06:00", "13:00"], ["15:00", "20:00"]],
         thu: [["06:00", "13:00"], ["15:00", "20:00"]], fri: [["06:00", "13:00"], ["15:00", "20:00"]], sat: [["11:00", "16:00"]], sun: [["11:00", "16:00"]] }) },
     { id: "study", name: "Study", minutes: 45, repeat: "anytime", order: 3 },
-    { id: "coffee", name: "Coffee with a friend", minutes: 45, repeat: "once", order: 4 },
+    { id: "coffee", name: "Coffee with a friend", minutes: 45, repeat: "once", order: 4,
+      hours: parseHours(Object.fromEntries(["sun", "mon", "tue", "wed", "thu", "fri", "sat"].map(k => [k, [["00:00", "16:00"]]]))) },
+    { id: "hangout", name: "Hangout / HW with a friend", minutes: 45, repeat: "once", order: 6 },
     { id: "laundry", name: "Laundry", minutes: 90, repeat: "once", order: 5 }
   ];
 
@@ -1186,7 +1188,13 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const h = Math.floor(m / 60) % 24, mm = m % 60, ap = h >= 12 ? "PM" : "AM";
     return { t: `${h % 12 || 12}${mm ? ":" + pad(mm) : ""}`, ap };
   }
-  function fmtWin([o, c]) { const a = fmtClock(o), b = fmtClock(c); return a.ap === b.ap ? `${a.t}–${b.t} ${b.ap}` : `${a.t} ${a.ap}–${b.t} ${b.ap}`; }
+  function fmtWin([o, c]) {
+    const a = fmtClock(o), b = fmtClock(c);
+    if (o === 0 && c >= 1440) return "any time";
+    if (o === 0) return `before ${b.t} ${b.ap}`;
+    if (c >= 1440) return `after ${a.t} ${a.ap}`;
+    return a.ap === b.ap ? `${a.t}–${b.t} ${b.ap}` : `${a.t} ${a.ap}–${b.t} ${b.ap}`;
+  }
   function hoursText(hours) {
     const order = [1, 2, 3, 4, 5, 6, 0], short = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const runs = [];
@@ -1194,7 +1202,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       const key = JSON.stringify(hours[d]), last = runs[runs.length - 1];
       if (last && last.key === key) last.to = d; else runs.push({ key, from: d, to: d, wins: hours[d] });
     }
-    return runs.map(r => `${short[r.from]}${r.to !== r.from ? "–" + short[r.to] : ""}: ${r.wins.length ? r.wins.map(fmtWin).join(", ") : "closed"}`).join("; ");
+    if (runs.length === 1) return `Every day, ${runs[0].wins.map(fmtWin).join(", ")}`;
+    return runs.map(r => `${short[r.from]}${r.to !== r.from ? "–" + short[r.to] : ""}: ${r.wins.length ? r.wins.map(fmtWin).join(", ") : "not planned"}`).join("; ");
   }
   function placeOptions(sel) {
     return [["", "No ride"], ...Object.entries(CLUBS).map(([k, c]) => [k, `Uber to ${c.short}`])]
@@ -1226,7 +1235,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
           <select id="ap-${esc(a.id)}" data-f="place" aria-label="Ride for ${esc(a.name)}">${placeOptions(a.place || "")}</select>
           <label class="check ex"><input type="checkbox" id="ax-${esc(a.id)}" data-f="group"${a.group === "exercise" ? " checked" : ""}><span>Exercise</span></label>
           <button class="icon-btn" type="button" data-del="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">×</button>
-        </div>${a.hours ? `<p class="fine hours">Planned only while it's open. ${esc(hoursText(a.hours))}</p>` : ""}`).join("");
+        </div>${a.hours ? `<p class="fine hours">Only planned at these times: ${esc(hoursText(a.hours))}</p>` : ""}`).join("");
     } else {
       box.innerHTML = (actsState === "ready" || actsState === "none") ? `<p class="none">Nothing on your list yet. Add the things you want to fit in, like the gym or laundry, and each open block will get a suggestion.</p>` : "";
     }

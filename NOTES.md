@@ -56,5 +56,10 @@ Live page: https://claude.ai/artifact/RBFSvFPhzKhjNqMdxM6wiW (source: `index.htm
 - Pool (on campus): Mon–Fri 6 AM–1 PM and 3–8 PM (closed 1–3 PM); Sat–Sun 11 AM–4 PM.
 - The activity list shows the hours under the activity. No in-page editor for hours yet; Claude changes them in the db.
 
+## Friends (Nov 4)
+- Coffee with a friend: only planned before 4 PM (hours 00:00–16:00 every day).
+- New activity "Hangout / HW with a friend", 45 min, every open block, any time of day (the after-4 PM alternative to coffee).
+- On the page, the user added gym activities for Balboa, Miramar and Pacific Beach, and set coffee to "every open block".
+
 ## Later
 - ClassPass cycling classes within 10 miles of 9450 Gilman Dr. ClassPass blocks automated access, so this needs the user's own browser (Claude in Chrome or the Claude desktop app) or pasted results.
