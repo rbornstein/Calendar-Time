@@ -33,6 +33,8 @@ Live page: https://claude.ai/artifact/RBFSvFPhzKhjNqMdxM6wiW (source: `index.htm
   - Uber matched "9165 Pharmacy Dr" to "9165 Pharmacy Ln". Check the pickup pin in the widget.
   - Also tested in Claude Chat (Nov 4): Claude got back only "Found 8 ride options from '9165 Pharmacy Ln' to '24 Hour Fitness'", with no names, prices or pickup times. Prices go only to the card a person sees. So no automation (Claude Chat or Claude Code) can collect Uber prices through this connector. A scheduled price-checking task was considered and dropped for this reason.
   - Usual gym windows from the calendar (Nov 2026): Mon 9am–1:30pm and after 6:30pm; Tue 9–11:30am and 3:30pm on; Wed 1–4:30pm and after 6:30pm; Thu 9am–1:30pm and 3:30–6:30pm; Fri 1pm on; Sat/Sun most of the day.
+  - TomTom Maps connector connected and tested Nov 4: `tomtom-routing` takes a future `departAt` and returns real numbers to Claude (length, travel time, traffic delay). Home → UTC club, Tue Nov 10: 10:00am 11m40s, 4:00pm 12m21s, 3.8 km, no traffic delay. Use `traffic: historical` for future times.
+  - Coordinates (lon, lat): home [-117.23546, 32.87222] (TomTom and Uber both call it 9165 Pharmacy **Lane**); UTC club [-117.211725, 32.871085].
   - Real prices option: read Uber receipt emails in Gmail (price, route, pickup time) and average them per route and time window. Not checked yet whether there are enough receipts.
 
 ## Later
