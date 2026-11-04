@@ -1,0 +1,768 @@
+<title>Calendar Time</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a paper planner. Each day is a ruled strip from your start hour to your end hour;
+   open time is marked with highlighter, busy time is pencil hatching. Summary first, then days. */
+:root {
+  --paper: #F5F7FA;
+  --surface: #FFFFFF;
+  --ink: #172030;
+  --ink-2: #4B566B;
+  --ink-3: #8790A3;
+  --rule: #DFE4EC;
+  --grid: #EDF0F5;
+  --hl: #FFD94A;
+  --hl-soft: #FFF1B3;
+  --hl-ink: #2B2200;
+  --busy: #CDD3DE;
+  --busy-hatch: #B7BFCD;
+  --busy-ink: #364055;
+  --now: #E1474C;
+  --warn-bg: #FFF5DA;
+  --warn-ink: #6B4B00;
+  --focus: #2E62E6;
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F131B; --surface: #161B25; --ink: #E7EBF2; --ink-2: #A8B1C2; --ink-3: #6D778B;
+    --rule: #262D3A; --grid: #1C2230; --hl: #E8C33E; --hl-soft: #3A3215; --hl-ink: #1C1600;
+    --busy: #343C4B; --busy-hatch: #434C5D; --busy-ink: #D3D9E4; --now: #FF676C;
+    --warn-bg: #2E2711; --warn-ink: #F0D489; --focus: #7FA2FF; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F131B; --surface: #161B25; --ink: #E7EBF2; --ink-2: #A8B1C2; --ink-3: #6D778B;
+  --rule: #262D3A; --grid: #1C2230; --hl: #E8C33E; --hl-soft: #3A3215; --hl-ink: #1C1600;
+  --busy: #343C4B; --busy-hatch: #434C5D; --busy-ink: #D3D9E4; --now: #FF676C;
+  --warn-bg: #2E2711; --warn-ink: #F0D489; --focus: #7FA2FF; color-scheme: dark;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  display: grid;
+  gap: 28px;
+}
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+
+/* Top bar */
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+.brand-mark { width: 14px; height: 14px; border-radius: 3px; background: var(--hl); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.meta { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+
+/* Hero / now */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px 32px; align-items: end; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.headline {
+  font-family: var(--font-display); font-weight: 600; font-size: clamp(32px, 6vw, 54px);
+  line-height: 1.04; letter-spacing: -0.025em; margin: 6px 0 10px; text-wrap: balance;
+}
+.headline mark {
+  background: linear-gradient(transparent 12%, var(--hl) 12%, var(--hl) 88%, transparent 88%);
+  color: var(--hl-ink); padding: 0 0.12em; margin: 0 -0.04em; border-radius: 2px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.sub { color: var(--ink-2); font-size: 16px; max-width: 60ch; }
+.sub b { color: var(--ink); font-weight: 600; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 8px;
+  border: 1px solid var(--rule); background: var(--surface); cursor: pointer; font-weight: 500; font-size: 14px;
+}
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn.primary:hover { opacity: 0.9; }
+.btn[disabled] { opacity: 0.55; cursor: default; }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.spin svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Notices */
+.notice {
+  background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 12px 16px;
+  font-size: 14px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+}
+.notice p { margin: 0; max-width: 70ch; }
+.notice .btn { background: transparent; border-color: currentColor; color: inherit; }
+
+/* Days */
+.days { display: grid; gap: 0; border-top: 1px solid var(--rule); }
+.day {
+  display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 12px 28px;
+  padding-block: 22px; border-bottom: 1px solid var(--rule);
+}
+.day-head { display: grid; gap: 2px; align-content: start; }
+.day-name { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: -0.015em; line-height: 1.1; }
+.day-date { font-size: 13px; color: var(--ink-3); }
+.day-total { margin-top: 8px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.day-total strong { font-weight: 500; color: var(--ink); background: var(--hl-soft); padding: 1px 5px; border-radius: 3px; }
+.allday { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+.allday span { font-size: 12px; color: var(--ink-2); border: 1px dashed var(--rule); padding: 1px 7px; border-radius: 999px; }
+.day-body { display: grid; gap: 14px; min-width: 0; }
+
+.strip-wrap { display: grid; gap: 4px; }
+.strip {
+  position: relative; height: 44px; border-radius: 6px; overflow: hidden;
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--rule);
+}
+.tick { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--grid); }
+.past { position: absolute; top: 0; bottom: 0; left: 0; background: repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 4px); opacity: 0.9; }
+.blk { position: absolute; top: 0; bottom: 0; }
+.blk.free { background: var(--hl); }
+.blk.busy {
+  top: 7px; bottom: 7px; border-radius: 3px;
+  background: var(--busy) repeating-linear-gradient(135deg, transparent 0 5px, var(--busy-hatch) 5px 6.5px);
+  box-shadow: inset 0 0 0 1px var(--busy-hatch);
+}
+.blk.maybe { top: 7px; bottom: 7px; border-radius: 3px; border: 1.5px dashed var(--busy-hatch); background: transparent; }
+.nowline { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: var(--now); }
+.nowline::before { content: ""; position: absolute; top: 0; left: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--now); }
+.scale { position: relative; height: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+.scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.scale span:first-child { transform: none; }
+.scale span:last-child { transform: translateX(-100%); }
+
+.slots { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.slot {
+  display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 6px;
+  background: var(--hl-soft); font-variant-numeric: tabular-nums;
+}
+.slot .t { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--ink); }
+.slot .d { font-size: 12px; color: var(--ink-2); }
+.slot.now-slot { background: var(--hl); }
+.slot.now-slot .t, .slot.now-slot .d { color: var(--hl-ink); }
+.none { color: var(--ink-3); font-size: 14px; }
+
+details.evs summary { cursor: pointer; font-size: 13px; color: var(--ink-2); width: fit-content; }
+details.evs summary:hover { color: var(--ink); }
+.evlist { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.evlist li { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 12px; font-size: 13px; }
+.evlist .et { font-family: var(--font-mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.evlist .en { min-width: 0; overflow-wrap: anywhere; }
+.evlist .tag { font-size: 11px; color: var(--ink-3); margin-left: 6px; }
+
+/* Skeleton */
+.skel .strip { background: var(--grid); }
+.skel .slots span { display: inline-block; width: 120px; height: 30px; border-radius: 6px; background: var(--grid); }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--ink-3); }
+.legend i { display: inline-block; width: 18px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
+.legend .lf { background: var(--hl); }
+.legend .lb { background: var(--busy) repeating-linear-gradient(135deg, transparent 0 3px, var(--busy-hatch) 3px 4px); }
+.legend .lm { border: 1.5px dashed var(--busy-hatch); }
+
+/* Settings */
+details.settings { border-top: 1px solid var(--rule); padding-top: 18px; }
+details.settings > summary {
+  cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 17px; list-style: none;
+  display: flex; align-items: center; gap: 8px; width: fit-content;
+}
+details.settings > summary::-webkit-details-marker { display: none; }
+details.settings > summary::before { content: "+"; font-family: var(--font-mono); color: var(--ink-3); width: 1ch; }
+details.settings[open] > summary::before { content: "−"; }
+.set-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px 28px; margin-top: 18px; }
+.field { display: grid; gap: 6px; align-content: start; }
+.field > label, .field > .lbl { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); background: var(--surface); }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.check input { margin-top: 3px; accent-color: var(--ink); }
+.check small { color: var(--ink-3); display: block; font-size: 12px; }
+.cal-list { display: grid; gap: 6px; }
+.cal-err { color: var(--now); font-size: 12px; margin-left: 4px; }
+.fine { font-size: 12px; color: var(--ink-3); max-width: 70ch; margin: 0; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--paper); padding: 9px 16px; border-radius: 8px; font-size: 14px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18); z-index: 20; max-width: calc(100vw - 32px);
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 680px) {
+  .hero { grid-template-columns: 1fr; }
+  .day { grid-template-columns: 1fr; gap: 12px; }
+  .day-head { grid-template-columns: auto auto; justify-content: space-between; align-items: baseline; }
+  .day-total { margin-top: 0; grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .allday { grid-column: 1 / -1; margin-top: 4px; }
+  .evlist li { grid-template-columns: 1fr; gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .spin svg { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Calendar Time</div>
+    <div class="meta" id="meta">Connecting to Google Calendar…</div>
+  </header>
+
+  <section class="hero" aria-live="polite">
+    <div>
+      <div class="eyebrow" id="eyebrow">Right now</div>
+      <h1 class="headline" id="headline">Reading your calendars…</h1>
+      <p class="sub" id="sub">Checking the next 3 days for open time.</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="refreshBtn" type="button" aria-label="Refresh calendar">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.7-4"/><path d="M13.5 2.5v3h-3"/></svg>
+        <span>Refresh</span>
+      </button>
+      <button class="btn primary" id="copyBtn" type="button">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M10.5 3V2.5A1 1 0 0 0 9.5 1.5h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1H4"/></svg>
+        <span>Copy my availability</span>
+      </button>
+    </div>
+  </section>
+
+  <div id="notice" hidden></div>
+
+  <section aria-label="Days">
+    <div class="days" id="days"></div>
+    <div class="legend" style="margin-top:12px">
+      <span><i class="lf"></i>Open</span>
+      <span><i class="lb"></i>Busy</span>
+      <span><i class="lm"></i>Maybe (not counted)</span>
+      <span id="legendBuf"></span>
+    </div>
+  </section>
+
+  <details class="settings" id="settings">
+    <summary>Settings</summary>
+    <div class="set-grid">
+      <div class="field">
+        <span class="lbl">Day runs</span>
+        <div class="row">
+          <select id="startH" aria-label="Day starts at"></select>
+          <span>to</span>
+          <select id="endH" aria-label="Day ends at"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="buffer">Buffer around events</label>
+        <select id="buffer">
+          <option value="0">None</option><option value="5">5 min</option><option value="10">10 min</option>
+          <option value="15">15 min</option><option value="30">30 min</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="minSlot">Shortest open block</label>
+        <select id="minSlot">
+          <option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option>
+          <option value="60">1 hour</option><option value="90">1.5 hours</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="lbl">Maybe events</span>
+        <label class="check"><input type="checkbox" id="countMaybe">
+          <span>Count as busy<small>Invites you haven't accepted, or answered "maybe".</small></span></label>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <span class="lbl">Calendars</span>
+        <div class="cal-list" id="calList"><span class="fine">Your calendars appear here once connected.</span></div>
+      </div>
+      <p class="fine" style="grid-column:1/-1">Declined events, events marked "free", and all-day events never block time. Settings are saved in this browser only.</p>
+    </div>
+  </details>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  const SERVER = "Google Calendar";
+  const DAYS = 3;
+  const MIN = 60e3;
+  const DENIALS = new Set(["needs_reauth","server_not_connected","selection_required","server_not_found","blocked_by_policy","approval_required","not_in_manifest","not_granted","capability_disabled","capability_removed","consent_required","user_changed"]);
+
+  // ---------- settings (per-browser convenience) ----------
+  const DEFAULTS = { startH: 8, endH: 22, buffer: 10, minSlot: 30, countMaybe: false, hidden: [] };
+  function loadSettings() {
+    try { const s = JSON.parse(localStorage.getItem("ct.settings") || "{}"); return { ...DEFAULTS, ...s, hidden: Array.isArray(s.hidden) ? s.hidden : [] }; }
+    catch { return { ...DEFAULTS }; }
+  }
+  function saveSettings() { try { localStorage.setItem("ct.settings", JSON.stringify(S)); } catch {} }
+  const S = loadSettings();
+
+  // ---------- state ----------
+  let M = null;              // mcp namespace
+  let mode = "loading";      // loading | live | example | blocked
+  let blocked = null;        // McpError for page-level problems
+  let calendars = null;      // [{id, summary}]
+  const byCal = new Map();   // id -> {events|null, storedAt, more, error}
+  let unsubs = [];
+  let anchor = dayKey(new Date());
+  let retriedCalendars = false;
+  let refreshing = false, refreshTimer = 0;
+
+  // ---------- dates ----------
+  function dayStart(i) { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate() + i); }
+  function at(d, h) { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, 0, 0, 0); }
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function dayKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+  function isoLocal(d) { return `${dayKey(d)}T00:00:00`; }
+  function hm(d) {
+    let h = d.getHours(), m = d.getMinutes();
+    const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12;
+    return { t: `${h}:${pad(m)}`, ap };
+  }
+  function fmtTime(d) { const x = hm(d); return `${x.t} ${x.ap}`; }
+  function fmtRange(a, b) {
+    const x = hm(a), y = hm(b);
+    const endIsMidnight = b.getHours() === 0 && b.getMinutes() === 0;
+    const yy = endIsMidnight ? { t: "12:00", ap: "AM" } : y;
+    return x.ap === yy.ap ? `${x.t}–${yy.t} ${yy.ap}` : `${x.t} ${x.ap}–${yy.t} ${yy.ap}`;
+  }
+  function fmtDur(ms) {
+    const m = Math.round(ms / MIN), h = Math.floor(m / 60), r = m % 60;
+    if (!h) return `${r}m`; return r ? `${h}h ${r}m` : `${h}h`;
+  }
+  function hourLabel(h) { const hh = h % 24; const ap = hh >= 12 ? "p" : "a"; return `${hh % 12 || 12}${ap}`; }
+  function dayName(i, d) {
+    if (i === 0) return "Today"; if (i === 1) return "Tomorrow";
+    return d.toLocaleDateString(undefined, { weekday: "long" });
+  }
+  function shortDay(d) { return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }); }
+  function relDay(i, d) { return i === 0 ? "today" : i === 1 ? "tomorrow" : d.toLocaleDateString(undefined, { weekday: "long" }); }
+  function ago(ts) {
+    const m = Math.round((Date.now() - ts) / MIN);
+    if (m < 1) return "just now"; if (m < 60) return `${m} min ago`;
+    const h = Math.round(m / 60); return `${h} hr ago`;
+  }
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // ---------- event normalisation ----------
+  function normalise(rawByCal) {
+    const seen = new Set(), timed = [], allDay = [];
+    for (const [calName, events] of rawByCal) {
+      for (const e of events) {
+        if (!e || e.status === "cancelled") continue;
+        const self = (e.attendees || []).find(a => a.self);
+        const rs = self && self.responseStatus;
+        if (rs === "declined") continue;
+        const title = e.summary || "Busy";
+        if (e.start && e.start.date && !e.start.dateTime) {
+          const k = "ad|" + title + "|" + e.start.date;
+          if (!seen.has(k)) { seen.add(k); allDay.push({ title, from: e.start.date, to: (e.end && e.end.date) || e.start.date }); }
+          continue;
+        }
+        if (e.transparency === "transparent") continue;
+        const s = new Date(e.start && e.start.dateTime), en = new Date(e.end && e.end.dateTime);
+        if (isNaN(s) || isNaN(en) || en <= s) continue;
+        const k = title + "|" + s.getTime() + "|" + en.getTime();
+        if (seen.has(k)) continue; seen.add(k);
+        timed.push({ title, start: s, end: en, maybe: rs === "tentative" || rs === "needsAction", cal: calName });
+      }
+    }
+    timed.sort((a, b) => a.start - b.start);
+    return { timed, allDay };
+  }
+
+  // ---------- availability ----------
+  function buildDays(data) {
+    const now = Date.now();
+    const days = [];
+    for (let i = 0; i < DAYS; i++) {
+      const d0 = dayStart(i);
+      const ws = at(d0, S.startH).getTime(), we = at(d0, S.endH).getTime();
+      const events = data.timed.filter(e => e.end > ws && e.start < we);
+      const blocking = events.filter(e => !e.maybe || S.countMaybe);
+      const buf = S.buffer * MIN;
+      const iv = blocking.map(e => [e.start.getTime() - buf, e.end.getTime() + buf]).sort((a, b) => a[0] - b[0]);
+      const merged = [];
+      for (const x of iv) { const last = merged[merged.length - 1]; if (last && x[0] <= last[1]) last[1] = Math.max(last[1], x[1]); else merged.push([...x]); }
+      let from = ws;
+      if (i === 0) from = Math.max(ws, Math.ceil(now / (5 * MIN)) * 5 * MIN);
+      const free = [];
+      const push = (a, b) => { if (b - a >= S.minSlot * MIN) free.push({ start: new Date(a), end: new Date(b) }); };
+      let cur = from;
+      for (const [a, b] of merged) {
+        if (cur >= we) break;
+        if (b <= cur) continue;
+        if (a > cur) push(cur, Math.min(a, we));
+        cur = Math.max(cur, b);
+      }
+      if (cur < we) push(cur, we);
+      const key = dayKey(d0);
+      const allDay = data.allDay.filter(a => a.from <= key && key < a.to || a.from === key);
+      days.push({ i, d0, ws, we, events, free, allDay, total: free.reduce((t, f) => t + (f.end - f.start), 0) });
+    }
+    return days;
+  }
+
+  // ---------- example data (shown only when the calendar can't be reached) ----------
+  function exampleData() {
+    const mk = (i, h1, m1, h2, m2, title, maybe) => {
+      const d = dayStart(i);
+      return { title, start: new Date(d.getFullYear(), d.getMonth(), d.getDate(), h1, m1), end: new Date(d.getFullYear(), d.getMonth(), d.getDate(), h2, m2), maybe: !!maybe, cal: "Example" };
+    };
+    return { timed: [
+      mk(0, 9, 0, 9, 50, "Lecture"), mk(0, 11, 0, 12, 20, "Discussion section"), mk(0, 14, 0, 15, 0, "Lab meeting"), mk(0, 18, 30, 20, 0, "Club meeting"),
+      mk(1, 8, 0, 9, 20, "Lecture"), mk(1, 12, 0, 13, 0, "Lunch with friend", true), mk(1, 15, 30, 17, 0, "Study group"),
+      mk(2, 10, 0, 11, 50, "Exam review"), mk(2, 13, 0, 16, 0, "Work shift"), mk(2, 19, 0, 21, 0, "Dinner")
+    ], allDay: [] };
+  }
+
+  // ---------- data loading ----------
+  function visibleCals() { return (calendars || []).filter(c => !S.hidden.includes(c.id)); }
+
+  async function loadCalendars() {
+    try {
+      const r = await M.callTool(SERVER, "list_calendars", { pageSize: 250 }, { cache: { staleTime: 10 * MIN, gcTime: 7 * 24 * 60 * MIN } });
+      const list = (r.payload && Array.isArray(r.payload.calendars)) ? r.payload.calendars : [];
+      calendars = list.filter(c => c && c.id).map(c => ({ id: c.id, summary: c.summary || c.id }));
+      mode = "live"; blocked = null;
+      renderCalList();
+      watchEvents();
+    } catch (e) {
+      if (e && e.retryable && !retriedCalendars) {
+        retriedCalendars = true;
+        setTimeout(loadCalendars, (e.retryAfterMs ?? 1200) + Math.random() * 800);
+        return;
+      }
+      setBlocked(e);
+    }
+    render();
+  }
+
+  function watchEvents() {
+    unsubs.forEach(u => { try { u(); } catch {} }); unsubs = [];
+    const startStr = isoLocal(dayStart(0)), endStr = isoLocal(dayStart(DAYS));
+    for (const c of visibleCals()) {
+      if (!byCal.has(c.id)) byCal.set(c.id, { events: null, storedAt: 0, more: false, error: null });
+      const input = { calendarId: c.id, startTime: startStr, endTime: endStr, pageSize: 250, orderBy: "startTime" };
+      const u = M.watchTool(SERVER, "list_events", input, ev => {
+        if (ev.type === "data") {
+          const p = ev.result.payload || {};
+          byCal.set(c.id, { events: Array.isArray(p.events) ? p.events : [], storedAt: (ev.result.cache && ev.result.cache.storedAt) || Date.now(), more: !!p.nextPageToken, error: null });
+          if (refreshing) endRefresh();
+        } else {
+          const err = ev.error || { code: "upstream_error" };
+          if (DENIALS.has(err.code)) { byCal.delete(c.id); setBlocked(err); }
+          else { const prev = byCal.get(c.id) || { events: null }; byCal.set(c.id, { ...prev, error: err }); }
+        }
+        scheduleRender();
+      }, { cache: { staleTime: MIN, gcTime: 7 * 24 * 60 * MIN }, refetchInterval: 5 * MIN });
+      unsubs.push(u);
+    }
+  }
+
+  function setBlocked(e) {
+    blocked = e || { code: "upstream_error", message: "" };
+    mode = "blocked";
+  }
+
+  async function retryAccess() {
+    blocked = null; mode = "loading"; retriedCalendars = false; render();
+    if (!calendars) return loadCalendars();
+    try {
+      const c = visibleCals()[0];
+      if (c) await M.callTool(SERVER, "list_events", { calendarId: c.id, startTime: isoLocal(dayStart(0)), endTime: isoLocal(dayStart(DAYS)), pageSize: 250, orderBy: "startTime" });
+      mode = "live"; watchEvents();
+    } catch (e) { setBlocked(e); }
+    render();
+  }
+
+  function startRefresh() {
+    if (!M || mode !== "live" || refreshing) return;
+    refreshing = true; render();
+    M.invalidate(SERVER).catch(() => {});
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(endRefresh, 12000);
+  }
+  function endRefresh() { refreshing = false; clearTimeout(refreshTimer); scheduleRender(); }
+
+  // ---------- rendering ----------
+  let rq = 0;
+  function scheduleRender() { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; render(); }); }
+
+  function currentData() {
+    if (mode === "example") return { data: exampleData(), ready: true, loaded: 0, total: 0 };
+    if (mode !== "live" || !calendars) return { data: null, ready: false, loaded: 0, total: 0 };
+    const vis = visibleCals();
+    const raw = []; let loaded = 0;
+    for (const c of vis) {
+      const st = byCal.get(c.id);
+      if (st && (st.events || st.error)) loaded++;
+      if (st && st.events) raw.push([c.summary, st.events]);
+    }
+    return { data: normalise(raw), ready: loaded >= vis.length, loaded, total: vis.length };
+  }
+
+  function render() {
+    const { data, ready, loaded, total } = currentData();
+    renderNotice();
+    renderMeta(ready, loaded, total);
+    $("legendBuf").textContent = S.buffer ? `Open time starts ${S.buffer} min after each event and ends ${S.buffer} min before the next.` : "";
+    $("refreshBtn").disabled = mode !== "live";
+    $("refreshBtn").classList.toggle("spin", refreshing);
+    $("copyBtn").disabled = !(data && ready);
+
+    if (!data || !ready) { renderSkeleton(loaded, total); return; }
+    const days = buildDays(data);
+    lastDays = days;
+    renderHero(days, data);
+    $("days").innerHTML = days.map(renderDay).join("");
+  }
+  let lastDays = null;
+
+  function renderMeta(ready, loaded, total) {
+    const el = $("meta");
+    if (mode === "example") { el.textContent = "Example schedule"; return; }
+    if (mode === "blocked") { el.textContent = "Not connected"; return; }
+    if (mode === "loading" || !calendars) { el.textContent = "Connecting to Google Calendar…"; return; }
+    if (!ready) { el.textContent = `Reading calendars ${loaded} of ${total}…`; return; }
+    if (refreshing) { el.textContent = "Refreshing…"; return; }
+    const stamps = visibleCals().map(c => byCal.get(c.id)).filter(s => s && s.events).map(s => s.storedAt);
+    el.textContent = stamps.length ? `${total} calendar${total === 1 ? "" : "s"} · updated ${ago(Math.min(...stamps))}` : "No calendars selected";
+  }
+
+  function renderNotice() {
+    const box = $("notice");
+    let html = "";
+    if (mode === "example") {
+      html = `<div class="notice"><p><b>This is an example schedule.</b> Your Google Calendar can only be read when this page is open in claude.ai with the Google Calendar connector added.</p></div>`;
+    } else if (mode === "blocked" && blocked) {
+      const c = blocked.code;
+      let msg, action = "";
+      if (c === "server_not_connected" || c === "server_not_found") msg = "Google Calendar isn't connected to your Claude account. Add it in claude.ai Settings → Connectors, then reload this page.";
+      else if (c === "needs_reauth") msg = "Your Google Calendar connection expired. Reconnect it in claude.ai Settings → Connectors, then reload this page.";
+      else if (c === "selection_required") msg = "You have more than one Google Calendar connector. Choose which one this page should use when claude.ai asks, then reload.";
+      else if (c === "not_in_manifest" || c === "consent_required") { msg = "Google Calendar is turned off for this page."; action = `<button class="btn" type="button" data-act="perms">Open permissions</button>`; }
+      else if (c === "approval_required") { msg = "This page needs your OK to read Google Calendar."; action = `<button class="btn" type="button" data-act="retry">Allow calendar access</button>`; }
+      else if (c === "blocked_by_policy") msg = "Your organization's policy blocks Google Calendar here.";
+      else if (c === "not_granted" || c === "capability_disabled" || c === "capability_removed") msg = "This view can't use connectors. Open the page in claude.ai to see your calendar.";
+      else { msg = "Google Calendar didn't respond."; action = `<button class="btn" type="button" data-act="retry">Try again</button>`; }
+      html = `<div class="notice"><p>${esc(msg)}</p>${action}</div>`;
+    } else if (mode === "live" && calendars) {
+      const bad = visibleCals().filter(c => { const s = byCal.get(c.id); return s && s.error && !s.events; });
+      const stale = visibleCals().filter(c => { const s = byCal.get(c.id); return s && s.error && s.events; });
+      const more = visibleCals().filter(c => { const s = byCal.get(c.id); return s && s.more; });
+      const parts = [];
+      if (bad.length) parts.push(`Couldn't read ${bad.map(c => `“${esc(c.summary)}”`).join(", ")}, so open time may include events from ${bad.length === 1 ? "it" : "them"}.`);
+      if (stale.length) parts.push(`Showing the last copy of ${stale.map(c => `“${esc(c.summary)}”`).join(", ")}; the latest refresh failed.`);
+      if (more.length) parts.push(`${more.map(c => `“${esc(c.summary)}”`).join(", ")} has more than 250 events in these days; only the first 250 are counted.`);
+      if (parts.length) html = `<div class="notice"><p>${parts.join(" ")}</p><button class="btn" type="button" data-act="refresh">Refresh</button></div>`;
+    }
+    box.innerHTML = html; box.hidden = !html;
+  }
+
+  function renderSkeleton(loaded, total) {
+    if (mode === "blocked") {
+      $("eyebrow").textContent = "Right now";
+      $("headline").textContent = "Calendar not connected";
+      $("sub").textContent = "Your open time will show here once Google Calendar is reachable.";
+    } else {
+      $("eyebrow").textContent = "Right now";
+      $("headline").textContent = "Reading your calendars…";
+      $("sub").textContent = total ? `Loaded ${loaded} of ${total} calendars. Checking the next ${DAYS} days.` : `Checking the next ${DAYS} days for open time.`;
+    }
+    let html = "";
+    for (let i = 0; i < DAYS; i++) {
+      const d = dayStart(i);
+      html += `<article class="day skel"><div class="day-head"><div class="day-name">${esc(dayName(i, d))}</div><div class="day-date">${esc(shortDay(d))}</div></div>
+        <div class="day-body"><div class="strip-wrap"><div class="strip"></div>${scaleHtml()}</div><div class="slots"><span></span><span></span></div></div></article>`;
+    }
+    $("days").innerHTML = html;
+  }
+
+  function renderHero(days, data) {
+    const now = new Date(), nowT = now.getTime();
+    const eb = $("eyebrow"), hl = $("headline"), sub = $("sub");
+    eb.textContent = mode === "example" ? "Right now · example" : "Right now";
+    const all = days.flatMap(d => d.free.map(f => ({ ...f, day: d })));
+    const today = days[0];
+    const inWindow = nowT >= today.ws && nowT < today.we;
+    const cur = all.find(f => f.day.i === 0 && f.start.getTime() - nowT <= 5 * MIN && f.end > now);
+    const blocking = data.timed.filter(e => !e.maybe || S.countMaybe);
+    const busyNow = blocking.filter(e => e.start <= now && e.end > now).sort((a, b) => b.end - a.end)[0];
+    const nextEvent = blocking.find(e => e.start > now);
+
+    if (cur && inWindow) {
+      hl.innerHTML = `<mark>Free now</mark> until ${esc(fmtTime(cur.end))}`;
+      const nxt = nextEvent && nextEvent.start.getTime() - cur.end.getTime() <= (S.buffer + 1) * MIN ? `Next up: <b>${esc(nextEvent.title)}</b> at ${esc(fmtTime(nextEvent.start))}.` : "";
+      sub.innerHTML = `${esc(fmtDur(cur.end - now))} open. ${nxt}`;
+      return;
+    }
+    const next = all.find(f => f.end > now && f.start >= now);
+    const nextTxt = next ? `${relDay(next.day.i, next.day.d0)}, ${fmtRange(next.start, next.end)}` : "";
+    if (busyNow && inWindow) {
+      hl.innerHTML = `Busy until ${esc(fmtTime(busyNow.end))}`;
+      sub.innerHTML = `In <b>${esc(busyNow.title)}</b>. ${next ? `Next open: <b>${esc(nextTxt)}</b> (${esc(fmtDur(next.end - next.start))}).` : `No open time in the next ${DAYS} days.`}`;
+      return;
+    }
+    if (next) {
+      eb.textContent = mode === "example" ? "Next open · example" : "Next open block";
+      const label = next.day.i === 0 ? fmtTime(next.start) : `${dayName(next.day.i, next.day.d0)}, ${fmtTime(next.start)}`;
+      hl.innerHTML = `<mark>${esc(label)}</mark>`;
+      sub.innerHTML = `Open until ${esc(fmtTime(next.end))}, ${esc(fmtDur(next.end - next.start))}. ${inWindow ? "" : `Your day runs ${esc(hourLabel(S.startH))}–${esc(hourLabel(S.endH))}.`}`;
+      return;
+    }
+    hl.textContent = `No open time in the next ${DAYS} days`;
+    sub.textContent = `Nothing ${S.minSlot} min or longer between ${hourLabel(S.startH)} and ${hourLabel(S.endH)}. Try a shorter minimum or a smaller buffer in Settings.`;
+  }
+
+  function scaleHtml() {
+    const span = S.endH - S.startH, step = span > 10 ? 2 : 1;
+    let out = "";
+    for (let h = S.startH; h <= S.endH; h += step) out += `<span style="left:${((h - S.startH) / span * 100).toFixed(3)}%">${hourLabel(h)}</span>`;
+    if ((S.endH - S.startH) % step) out += `<span style="left:100%">${hourLabel(S.endH)}</span>`;
+    return `<div class="scale" aria-hidden="true">${out}</div>`;
+  }
+
+  function renderDay(day) {
+    const span = day.we - day.ws;
+    const pct = t => Math.max(0, Math.min(100, (t - day.ws) / span * 100));
+    const now = Date.now();
+    let strip = "";
+    for (let h = S.startH + 1; h < S.endH; h++) strip += `<div class="tick" style="left:${((h - S.startH) / (S.endH - S.startH) * 100).toFixed(3)}%"></div>`;
+    if (day.i === 0 && now > day.ws) strip += `<div class="past" style="width:${pct(now).toFixed(3)}%"></div>`;
+    for (const f of day.free) strip += `<div class="blk free" style="left:${pct(f.start).toFixed(3)}%;width:${(pct(f.end) - pct(f.start)).toFixed(3)}%" title="Open ${esc(fmtRange(f.start, f.end))}"></div>`;
+    for (const e of day.events) {
+      const counts = !e.maybe || S.countMaybe;
+      const l = pct(e.start), w = Math.max(0.4, pct(e.end) - l);
+      strip += `<div class="blk ${counts ? "busy" : "maybe"}" style="left:${l.toFixed(3)}%;width:${w.toFixed(3)}%" title="${esc(e.title)} · ${esc(fmtRange(e.start, e.end))}${counts ? "" : " (maybe)"}"></div>`;
+    }
+    if (day.i === 0 && now >= day.ws && now <= day.we) strip += `<div class="nowline" style="left:${pct(now).toFixed(3)}%" title="Now"></div>`;
+
+    const srText = day.free.length ? `Open: ${day.free.map(f => fmtRange(f.start, f.end)).join(", ")}` : "No open time";
+    const slots = day.free.length
+      ? `<ul class="slots">${day.free.map(f => {
+          const isNow = day.i === 0 && f.start.getTime() - now <= 5 * MIN && f.end > now;
+          return `<li class="slot${isNow ? " now-slot" : ""}"><span class="t">${esc(fmtRange(f.start, f.end))}</span><span class="d">${esc(fmtDur(f.end - f.start))}</span></li>`;
+        }).join("")}</ul>`
+      : `<p class="none">${day.i === 0 && now >= day.we ? "Your day is over." : `No open blocks of ${S.minSlot} min or more.`}</p>`;
+
+    const evs = day.events.length
+      ? `<details class="evs"><summary>${day.events.length} event${day.events.length === 1 ? "" : "s"}</summary><ul class="evlist">${day.events.map(e =>
+          `<li><span class="et">${esc(fmtRange(e.start, e.end))}</span><span class="en">${esc(e.title)}${e.maybe ? `<span class="tag">maybe${S.countMaybe ? "" : ", not counted"}</span>` : ""}${e.cal && calendars && calendars.length > 1 ? `<span class="tag">${esc(e.cal)}</span>` : ""}</span></li>`).join("")}</ul></details>`
+      : "";
+
+    const allDay = day.allDay.length ? `<div class="allday">${day.allDay.map(a => `<span title="All-day, doesn't block time">${esc(a.title)}</span>`).join("")}</div>` : "";
+
+    return `<article class="day">
+      <div class="day-head">
+        <div class="day-name">${esc(dayName(day.i, day.d0))}</div>
+        <div class="day-date">${esc(shortDay(day.d0))}</div>
+        <div class="day-total"><strong>${esc(fmtDur(day.total))}</strong> open</div>
+        ${allDay}
+      </div>
+      <div class="day-body">
+        <div class="strip-wrap"><div class="strip" role="img" aria-label="${esc(srText)}">${strip}</div>${scaleHtml()}</div>
+        ${slots}
+        ${evs}
+      </div>
+    </article>`;
+  }
+
+  // ---------- settings UI ----------
+  function $(id) { return document.getElementById(id); }
+  function fillHours() {
+    const sh = $("startH"), eh = $("endH");
+    sh.innerHTML = ""; eh.innerHTML = "";
+    for (let h = 5; h <= 13; h++) sh.add(new Option(fmtHourLong(h), h));
+    for (let h = 14; h <= 24; h++) eh.add(new Option(fmtHourLong(h), h));
+    sh.value = S.startH; eh.value = S.endH;
+  }
+  function fmtHourLong(h) { if (h === 24) return "Midnight"; if (h === 12) return "Noon"; return `${h % 12 || 12} ${h >= 12 ? "PM" : "AM"}`; }
+
+  function renderCalList() {
+    const box = $("calList");
+    if (!calendars) return;
+    if (!calendars.length) { box.innerHTML = `<span class="fine">No calendars found on this Google account.</span>`; return; }
+    box.innerHTML = calendars.map((c, i) => {
+      const st = byCal.get(c.id);
+      const err = st && st.error && !st.events ? `<span class="cal-err">couldn't load</span>` : "";
+      return `<label class="check"><input type="checkbox" id="cal-${i}" data-cal="${esc(c.id)}" ${S.hidden.includes(c.id) ? "" : "checked"}><span>${esc(c.summary)}${err}</span></label>`;
+    }).join("");
+  }
+
+  function bind() {
+    fillHours();
+    $("buffer").value = S.buffer; $("minSlot").value = S.minSlot; $("countMaybe").checked = S.countMaybe;
+    const onChange = () => {
+      S.startH = +$("startH").value; S.endH = +$("endH").value;
+      S.buffer = +$("buffer").value; S.minSlot = +$("minSlot").value; S.countMaybe = $("countMaybe").checked;
+      saveSettings(); render();
+    };
+    ["startH", "endH", "buffer", "minSlot", "countMaybe"].forEach(id => $(id).addEventListener("change", onChange));
+    $("calList").addEventListener("change", e => {
+      const id = e.target && e.target.getAttribute("data-cal"); if (!id) return;
+      S.hidden = e.target.checked ? S.hidden.filter(x => x !== id) : [...new Set([...S.hidden, id])];
+      saveSettings();
+      if (M && mode === "live") watchEvents();
+      render();
+    });
+    $("refreshBtn").addEventListener("click", startRefresh);
+    $("copyBtn").addEventListener("click", copyAvailability);
+    $("notice").addEventListener("click", async e => {
+      const b = e.target.closest("[data-act]"); if (!b) return;
+      const act = b.getAttribute("data-act");
+      if (act === "retry") retryAccess();
+      else if (act === "refresh") startRefresh();
+      else if (act === "perms") {
+        try { const p = await window.claude.use("permissions"); if (!p) throw 0; await p.manage(); retryAccess(); }
+        catch { toast("Open this artifact's Permissions menu and turn Google Calendar on."); }
+      }
+    });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+  }
+
+  function availabilityText() {
+    if (!lastDays) return "";
+    const lines = lastDays.map(d => `${shortDay(d.d0)}: ${d.free.length ? d.free.map(f => fmtRange(f.start, f.end)).join(", ") : "no open time"}`);
+    return `My availability:\n${lines.join("\n")}`;
+  }
+  async function copyAvailability() {
+    const text = availabilityText(); if (!text) return;
+    try { await navigator.clipboard.writeText(text); toast("Copied your availability"); }
+    catch {
+      const ta = document.createElement("textarea"); ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch {}
+      ta.remove();
+      toast(ok ? "Copied your availability" : "Couldn't copy. Select the times on the page instead.");
+    }
+  }
+  let toastT = 0;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600); }
+
+  // ---------- clock ----------
+  setInterval(() => {
+    const k = dayKey(new Date());
+    if (k !== anchor) { anchor = k; byCal.clear(); if (M && mode === "live") watchEvents(); }
+    if (!document.hidden) render();
+  }, MIN);
+
+  // ---------- boot ----------
+  async function boot() {
+    bind();
+    render();
+    let mcp = null;
+    try { mcp = window.claude && window.claude.use ? await window.claude.use("mcp") : null; } catch { mcp = null; }
+    if (!mcp) { mode = "example"; render(); return; }
+    M = mcp;
+    loadCalendars();
+  }
+  boot();
+})();
+</script>
