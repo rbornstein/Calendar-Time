@@ -51,5 +51,10 @@ Live page: https://claude.ai/artifact/RBFSvFPhzKhjNqMdxM6wiW (source: `index.htm
 - The top section lists everything planned for the current or next free block (start time, what, until when). The planner fills that block first with as many activities as fit, longest first, then plans the other blocks.
 - A key above the timelines explains the colors.
 
+## Opening hours (Nov 4)
+- Activities can have `hours` in the db: {mon: [["06:00","13:00"], ...], ...}; a missing or empty day means closed. The planner only places the activity while it's open, at the earliest open time in a free block (it can start later in the block).
+- Pool (on campus): Mon–Fri 6 AM–1 PM and 3–8 PM (closed 1–3 PM); Sat–Sun 11 AM–4 PM.
+- The activity list shows the hours under the activity. No in-page editor for hours yet; Claude changes them in the db.
+
 ## Later
 - ClassPass cycling classes within 10 miles of 9450 Gilman Dr. ClassPass blocks automated access, so this needs the user's own browser (Claude in Chrome or the Claude desktop app) or pasted results.

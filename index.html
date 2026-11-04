@@ -190,6 +190,7 @@ details.evs summary:hover { color: var(--ink); }
 .sec-head { display: grid; gap: 4px; }
 .sec-head h2 { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: -0.015em; margin: 0; }
 .acts { display: grid; gap: 8px; }
+.acts .hours { margin: -2px 0 4px; }
 .check.ex { align-items: center; font-size: 13px; }
 .check.ex input { margin-top: 0; }
 .act-row, .act-add { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em 11em 11em auto 40px; gap: 8px; align-items: center; }
@@ -407,7 +408,9 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   const DURS = [15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 240];
   const EXAMPLE_ACTS = [
     { id: "gym", name: "Gym (off campus)", minutes: 90, repeat: "daily", order: 1, group: "exercise", place: "utc" },
-    { id: "pool", name: "Pool (on campus)", minutes: 60, repeat: "daily", order: 2, group: "exercise" },
+    { id: "pool", name: "Pool (on campus)", minutes: 60, repeat: "daily", order: 2, group: "exercise",
+      hours: parseHours({ mon: [["06:00", "13:00"], ["15:00", "20:00"]], tue: [["06:00", "13:00"], ["15:00", "20:00"]], wed: [["06:00", "13:00"], ["15:00", "20:00"]],
+        thu: [["06:00", "13:00"], ["15:00", "20:00"]], fri: [["06:00", "13:00"], ["15:00", "20:00"]], sat: [["11:00", "16:00"]], sun: [["11:00", "16:00"]] }) },
     { id: "study", name: "Study", minutes: 45, repeat: "anytime", order: 3 },
     { id: "coffee", name: "Coffee with a friend", minutes: 45, repeat: "once", order: 4 },
     { id: "laundry", name: "Laundry", minutes: 90, repeat: "once", order: 5 }
@@ -584,10 +587,37 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   }
   const isTrip = a => !!(a.place && CLUBS[a.place]);
 
-  // ---------- suggestions: fit activities into open blocks ----------
-  // Pass 1: each activity once, longest first, into the block it fits most snugly (keeps big blocks for big things).
-  // Pass 2: fill what's left of each block with activities still allowed (daily: once per day; anytime: no limit).
+  // ---------- suggestions: fit activities into free blocks ----------
+  // Each block keeps its planned items as time ranges. An activity goes at the earliest time in the block where
+  // it fits in the unplanned time and, if it has opening hours (like the pool), while the place is open.
+  // Pass 0: the free block you're in now (or the next one) gets as many things as fit, longest first.
+  // Pass 1: each remaining activity once, longest first, into the block it fits most snugly.
+  // Pass 2: fill what's left with activities still allowed (daily: once per day; anytime: once per block).
   // A gym trip only goes into an empty block, so it always leaves at the start of the block.
+  function gapsOf(s) {
+    const g = []; let t = s.start.getTime();
+    for (const it of s.items) { if (it.start > t) g.push([t, it.start]); t = Math.max(t, it.end); }
+    if (s.end.getTime() > t) g.push([t, s.end.getTime()]);
+    return g;
+  }
+  function openWindows(a, s) {
+    if (!a.hours) return null;
+    const d = s.start, mid = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    return (a.hours[d.getDay()] || []).map(([o, c]) => [mid + o * MIN, mid + c * MIN]);
+  }
+  function startFor(a, s) {
+    if (isTrip(a)) {
+      if (s.items.length) return null;
+      const ms = tripFor(a, s.start, false).ms;
+      return ms <= s.end - s.start ? { start: s.start.getTime(), ms } : null;
+    }
+    const wins = openWindows(a, s), step = 5 * MIN;
+    for (const [g0, g1] of gapsOf(s)) {
+      const segs = wins ? wins.map(([o, c]) => [Math.max(g0, o), Math.min(g1, c)]).filter(([x, y]) => y > x) : [[g0, g1]];
+      for (const [x, y] of segs) { const t = x === s.start.getTime() ? x : Math.ceil(x / step) * step; if (t + a.ms <= y) return { start: t, ms: a.ms }; }
+    }
+    return null;
+  }
   function planDays(days) {
     const list = (acts || []).filter(a => a.minutes > 0).map(a => ({ ...a, ms: a.minutes * MIN }))
       .map(a => ({ ...a, sortMs: isTrip(a) ? tripFor(a, new Date(), false).ms : a.ms }))
@@ -601,14 +631,16 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const placed = new Set();      // activity ids planned anywhere
     const groupDays = new Map();   // group -> Set(day): only one exercise per day
     const groupOk = (a, day) => !a.group || !(groupDays.get(a.group) && groupDays.get(a.group).has(day));
-    const fits = (a, s) => isTrip(a) ? !s.items.length && tripFor(a, s.start, false).ms <= s.left : a.ms <= s.left;
+    const fits = (a, s) => !!startFor(a, s);
     const place = (s, a) => {
+      const r = startFor(a, s); if (!r) return;
       const trip = isTrip(a) ? tripFor(a, s.start, true) : null;
-      const ms = trip ? trip.ms : a.ms;
-      s.items.push({ ...a, ms, trip }); s.left -= ms; used.get(a.id).add(s.day); placed.add(a.id);
+      const ms = trip ? trip.ms : r.ms;
+      s.items.push({ id: a.id, name: a.name, start: r.start, end: r.start + ms, trip });
+      s.items.sort((x, y) => x.start - y.start);
+      s.left -= ms; used.get(a.id).add(s.day); placed.add(a.id);
       if (a.group) { if (!groupDays.has(a.group)) groupDays.set(a.group, new Set()); groupDays.get(a.group).add(s.day); }
     };
-    // Pass 0: the free block you're in now (or the next one) gets as many things as fit, longest first.
     const first = slots[0];
     if (first) for (;;) {
       const a = list.find(a => fits(a, first) && groupOk(a, first.day) && !first.items.some(x => x.id === a.id)
@@ -622,7 +654,6 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       for (const s of slots) if (fits(a, s) && groupOk(a, s.day) && (!best || s.left < best.left)) best = s;
       if (best) place(best, a);
     }
-    // Fill: daily things not yet planned that day first, then one session of an "as often as fits" activity per block.
     for (const s of slots) {
       for (;;) {
         const a = list.find(a => fits(a, s) && a.repeat === "daily" && !used.get(a.id).has(s.day) && groupOk(a, s.day))
@@ -632,13 +663,10 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       }
     }
     for (const s of slots) {
-      const groups = [];
-      for (const a of s.items) { const g = groups.find(g => g.id === a.id); if (g) g.ms += a.ms; else groups.push({ id: a.id, name: a.name, ms: a.ms, trip: a.trip }); }
-      let t = s.start.getTime();
-      s.steps = groups.map(g => { const st = { name: g.name, start: new Date(t), end: new Date(t + g.ms), trip: g.trip }; t += g.ms; return st; });
-      s.spare = s.end.getTime() - t;
-      const full = s.end - s.start;
-      s.also = list.filter(a => (isTrip(a) ? tripFor(a, s.start, false).ms : a.ms) <= full && !groups.some(g => g.id === a.id)).map(a => a.name);
+      s.steps = s.items.map(it => ({ name: it.name, start: new Date(it.start), end: new Date(it.end), trip: it.trip }));
+      s.spare = s.left;
+      const empty = { start: s.start, end: s.end, items: [] };
+      s.also = list.filter(a => !s.items.some(x => x.id === a.id) && startFor(a, empty)).map(a => a.name);
     }
   }
 
@@ -681,7 +709,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   }
   function planExtras(p) {
     let out = "";
-    if (p.steps.length && p.spare >= 15 * MIN) out += `<span class="spare">${esc(fmtDur(p.spare))} left over at the end.</span>`;
+    if (p.steps.length && p.spare >= 15 * MIN) out += `<span class="spare">${esc(fmtDur(p.spare))} of this block is still unplanned.</span>`;
     if (p.also.length) out += `<span class="also">Other things that fit here: ${p.also.map(esc).join(", ")}</span>`;
     return out;
   }
@@ -1140,7 +1168,33 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     if (!(minutes > 0)) return null;
     const repeat = REPEATS.some(r => r[0] === d.repeat) ? d.repeat : "daily";
     return { id, name: d.name.trim().slice(0, 60), minutes, repeat, order: +d.order || 0, group: d.group === "exercise" ? "exercise" : "",
-      place: typeof d.place === "string" && CLUBS[d.place] ? d.place : "" };
+      place: typeof d.place === "string" && CLUBS[d.place] ? d.place : "", hours: parseHours(d.hours), rawHours: d.hours || null };
+  }
+
+  // Opening hours, stored as {mon: [["06:00","13:00"], ...], ...}. A day that's missing or empty is closed.
+  // Parsed into an array indexed by Date.getDay() of [openMin, closeMin] pairs; null means "always open".
+  function parseHours(h) {
+    if (!h || typeof h !== "object") return null;
+    const WEEK = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    const toMin = x => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(x)); return m ? +m[1] * 60 + +m[2] : NaN; };
+    const out = WEEK.map(k => (Array.isArray(h[k]) ? h[k] : [])
+      .map(w => Array.isArray(w) ? [toMin(w[0]), toMin(w[1])] : [NaN, NaN])
+      .filter(([o, c]) => o >= 0 && c > o && c <= 1440));
+    return out.some(w => w.length) ? out : null;
+  }
+  function fmtClock(m) {
+    const h = Math.floor(m / 60) % 24, mm = m % 60, ap = h >= 12 ? "PM" : "AM";
+    return { t: `${h % 12 || 12}${mm ? ":" + pad(mm) : ""}`, ap };
+  }
+  function fmtWin([o, c]) { const a = fmtClock(o), b = fmtClock(c); return a.ap === b.ap ? `${a.t}–${b.t} ${b.ap}` : `${a.t} ${a.ap}–${b.t} ${b.ap}`; }
+  function hoursText(hours) {
+    const order = [1, 2, 3, 4, 5, 6, 0], short = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const runs = [];
+    for (const d of order) {
+      const key = JSON.stringify(hours[d]), last = runs[runs.length - 1];
+      if (last && last.key === key) last.to = d; else runs.push({ key, from: d, to: d, wins: hours[d] });
+    }
+    return runs.map(r => `${short[r.from]}${r.to !== r.from ? "–" + short[r.to] : ""}: ${r.wins.length ? r.wins.map(fmtWin).join(", ") : "closed"}`).join("; ");
   }
   function placeOptions(sel) {
     return [["", "No ride"], ...Object.entries(CLUBS).map(([k, c]) => [k, `Uber to ${c.short}`])]
@@ -1172,7 +1226,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
           <select id="ap-${esc(a.id)}" data-f="place" aria-label="Ride for ${esc(a.name)}">${placeOptions(a.place || "")}</select>
           <label class="check ex"><input type="checkbox" id="ax-${esc(a.id)}" data-f="group"${a.group === "exercise" ? " checked" : ""}><span>Exercise</span></label>
           <button class="icon-btn" type="button" data-del="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">×</button>
-        </div>`).join("");
+        </div>${a.hours ? `<p class="fine hours">Planned only while it's open. ${esc(hoursText(a.hours))}</p>` : ""}`).join("");
     } else {
       box.innerHTML = (actsState === "ready" || actsState === "none") ? `<p class="none">Nothing on your list yet. Add the things you want to fit in, like the gym or laundry, and each open block will get a suggestion.</p>` : "";
     }
@@ -1195,6 +1249,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   async function removeAct(id) {
     const a = acts && acts.find(x => x.id === id); if (!a) return;
     const body = { name: a.name, minutes: a.minutes, repeat: a.repeat, group: a.group || "", place: a.place || "", order: a.order };
+    if (a.rawHours) body.hours = a.rawHours;
     const restore = async () => {
       if (!DB) return localApply(() => acts.push({ id, ...body }));
       try { await DB.doc("activities/" + id).set(body); } catch (e) { toast(dbErrMsg(e)); }
