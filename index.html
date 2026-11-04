@@ -4,94 +4,87 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a paper planner. Each day is a ruled strip from your start hour to your end hour;
-   open time is marked with highlighter, busy time is pencil hatching. Summary first, then days. */
+/* Layout: a day planner. Each day is one timeline from your start hour to your end hour: calendar events are
+   labeled gray blocks, free time is sage green. Under each timeline, every free block gets a short agenda. */
 :root {
-  --paper: #F5F7FA;
+  --paper: #F5F6F8;
   --surface: #FFFFFF;
-  --ink: #172030;
-  --ink-2: #4B566B;
-  --ink-3: #8790A3;
-  --rule: #DFE4EC;
-  --grid: #EDF0F5;
-  --hl: #FFD94A;
-  --hl-soft: #FFF1B3;
-  --hl-ink: #2B2200;
-  --busy: #CDD3DE;
-  --busy-hatch: #B7BFCD;
-  --busy-ink: #364055;
-  --now: #E1474C;
-  --warn-bg: #FFF5DA;
+  --ink: #1B2230;
+  --ink-2: #4A5468;
+  --ink-3: #737C90;
+  --rule: #E0E4EB;
+  --grid: #ECEFF4;
+  --free: #DDEFE5;
+  --free-edge: #A3CFB7;
+  --free-ink: #1F5B43;
+  --free-strong: #2B8560;
+  --busy: #D6DCE6;
+  --busy-edge: #B4BDCC;
+  --busy-ink: #263043;
+  --now: #D9434A;
+  --warn-bg: #FFF4DA;
   --warn-ink: #6B4B00;
-  --focus: #2E62E6;
+  --focus: #2F6FDB;
+  --link: #2563C9;
   --due: #6A3FD6;
   --due-ink: #FFFFFF;
   --due-soft: #EEE8FD;
+  --tip-bg: #1B2230;
+  --tip-ink: #F3F5F8;
+  --tip-dim: #B3BBCA;
   --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0F131B; --surface: #161B25; --ink: #E7EBF2; --ink-2: #A8B1C2; --ink-3: #6D778B;
-    --rule: #262D3A; --grid: #1C2230; --hl: #E8C33E; --hl-soft: #3A3215; --hl-ink: #1C1600;
-    --busy: #343C4B; --busy-hatch: #434C5D; --busy-ink: #D3D9E4; --now: #FF676C;
-    --warn-bg: #2E2711; --warn-ink: #F0D489; --focus: #7FA2FF; color-scheme: dark;
-    --due: #B497FF; --due-ink: #170B35; --due-soft: #2A2145;
+    --paper: #0F131A; --surface: #161B24; --ink: #E6EAF1; --ink-2: #A9B2C3; --ink-3: #7A8498;
+    --rule: #262D39; --grid: #1C222D; --free: #173226; --free-edge: #2E6A50; --free-ink: #A6DDC2; --free-strong: #62C69B;
+    --busy: #2C3445; --busy-edge: #435069; --busy-ink: #DDE3EC; --now: #FF6B70;
+    --warn-bg: #2E2711; --warn-ink: #F0D489; --focus: #7FA2FF; --link: #8DB0FF;
+    --due: #B497FF; --due-ink: #170B35; --due-soft: #2A2145; --tip-bg: #E6EAF1; --tip-ink: #121720; --tip-dim: #4A5468;
+    color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #0F131B; --surface: #161B25; --ink: #E7EBF2; --ink-2: #A8B1C2; --ink-3: #6D778B;
-  --rule: #262D3A; --grid: #1C2230; --hl: #E8C33E; --hl-soft: #3A3215; --hl-ink: #1C1600;
-  --busy: #343C4B; --busy-hatch: #434C5D; --busy-ink: #D3D9E4; --now: #FF676C;
-  --warn-bg: #2E2711; --warn-ink: #F0D489; --focus: #7FA2FF; color-scheme: dark;
-  --due: #B497FF; --due-ink: #170B35; --due-soft: #2A2145;
+  --paper: #0F131A; --surface: #161B24; --ink: #E6EAF1; --ink-2: #A9B2C3; --ink-3: #7A8498;
+  --rule: #262D39; --grid: #1C222D; --free: #173226; --free-edge: #2E6A50; --free-ink: #A6DDC2; --free-strong: #62C69B;
+  --busy: #2C3445; --busy-edge: #435069; --busy-ink: #DDE3EC; --now: #FF6B70;
+  --warn-bg: #2E2711; --warn-ink: #F0D489; --focus: #7FA2FF; --link: #8DB0FF;
+  --due: #B497FF; --due-ink: #170B35; --due-soft: #2A2145; --tip-bg: #E6EAF1; --tip-ink: #121720; --tip-dim: #4A5468;
+  color-scheme: dark;
 }
 
-body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.5;
-}
+body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
 .wrap {
-  max-width: 980px;
-  margin: 0 auto;
+  max-width: 980px; margin: 0 auto;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 28px 56px;
-  display: grid;
-  gap: 28px;
+  display: grid; gap: 28px;
 }
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+a { color: var(--link); }
 
 /* Top bar */
 .top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
-.brand-mark { width: 14px; height: 14px; border-radius: 3px; background: var(--hl); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.brand-mark { width: 14px; height: 14px; border-radius: 3px; background: var(--free); box-shadow: inset 0 0 0 1.5px var(--free-strong); }
 .meta { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
 
-/* Hero / now */
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px 32px; align-items: end; }
+/* Hero: where you are now, and what fits in this free time */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 32px; align-items: start; }
+.hero-main { min-width: 0; display: grid; gap: 6px; }
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
-.headline {
-  font-family: var(--font-display); font-weight: 600; font-size: clamp(32px, 6vw, 54px);
-  line-height: 1.04; letter-spacing: -0.025em; margin: 6px 0 10px; text-wrap: balance;
-}
-.headline mark {
-  background: linear-gradient(transparent 12%, var(--hl) 12%, var(--hl) 88%, transparent 88%);
-  color: var(--hl-ink); padding: 0 0.12em; margin: 0 -0.04em; border-radius: 2px;
-  -webkit-box-decoration-break: clone; box-decoration-break: clone;
-}
-.sub { color: var(--ink-2); font-size: 16px; max-width: 60ch; }
+.headline { font-family: var(--font-display); font-weight: 600; font-size: clamp(28px, 5vw, 44px); line-height: 1.08; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.headline .free-tag { color: var(--free-strong); }
+.sub { color: var(--ink-2); font-size: 16px; max-width: 62ch; margin: 0; }
 .sub b { color: var(--ink); font-weight: 600; }
+.hero-plan { margin-top: 10px; display: grid; gap: 10px; max-width: 680px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
+.lbl-sm { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn {
-  display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 8px;
-  border: 1px solid var(--rule); background: var(--surface); cursor: pointer; font-weight: 500; font-size: 14px;
-}
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--rule); background: var(--surface); cursor: pointer; font-weight: 500; font-size: 14px; }
 .btn:hover { border-color: var(--ink-3); }
 .btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .btn.primary:hover { opacity: 0.9; }
@@ -101,70 +94,65 @@ button, select, input { font: inherit; color: inherit; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Notices */
-.notice {
-  background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 12px 16px;
-  font-size: 14px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
-}
+.notice { background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 12px 16px; font-size: 14px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .notice p { margin: 0; max-width: 70ch; }
 .notice .btn { background: transparent; border-color: currentColor; color: inherit; }
 
+/* How to read the page */
+.guide { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font-size: 13px; color: var(--ink-2); margin-bottom: 4px; }
+.guide i { display: inline-block; width: 18px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.guide .lf { background: var(--free); box-shadow: inset 0 0 0 1px var(--free-edge); }
+.guide .lb { background: var(--busy); box-shadow: inset 0 0 0 1px var(--busy-edge); }
+.guide .lm { border: 1.5px dashed var(--busy-edge); }
+.guide .ld { width: 3px; background: var(--due); border-radius: 0; }
+
 /* Days */
 .days { display: grid; gap: 0; border-top: 1px solid var(--rule); }
-.day {
-  display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 12px 28px;
-  padding-block: 22px; border-bottom: 1px solid var(--rule);
-}
+.day { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px 28px; padding-block: 22px; border-bottom: 1px solid var(--rule); }
 .day-head { display: grid; gap: 2px; align-content: start; }
 .day-name { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: -0.015em; line-height: 1.1; }
 .day-date { font-size: 13px; color: var(--ink-3); }
-.day-total { margin-top: 8px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.day-total strong { font-weight: 500; color: var(--ink); background: var(--hl-soft); padding: 1px 5px; border-radius: 3px; }
+.day-total { margin-top: 8px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.day-total strong { font-family: var(--font-mono); font-weight: 500; color: var(--free-ink); }
 .allday { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
 .allday span { font-size: 12px; color: var(--ink-2); border: 1px dashed var(--rule); padding: 1px 7px; border-radius: 999px; }
-.day-body { display: grid; gap: 14px; min-width: 0; }
+.day-body { display: grid; gap: 16px; min-width: 0; }
 
+/* Timeline */
 .strip-wrap { display: grid; gap: 4px; }
-.strip {
-  position: relative; height: 44px; border-radius: 6px; overflow: hidden;
-  background: var(--surface); box-shadow: inset 0 0 0 1px var(--rule);
-}
+.strip { position: relative; height: 52px; border-radius: 8px; overflow: hidden; background: var(--surface); box-shadow: inset 0 0 0 1px var(--rule); }
 .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--grid); }
-.past { position: absolute; top: 0; bottom: 0; left: 0; background: repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 4px); opacity: 0.9; }
-.blk { position: absolute; top: 0; bottom: 0; }
-.blk.free { background: var(--hl); }
-.blk.busy {
-  top: 7px; bottom: 7px; border-radius: 3px;
-  background: var(--busy) repeating-linear-gradient(135deg, transparent 0 5px, var(--busy-hatch) 5px 6.5px);
-  box-shadow: inset 0 0 0 1px var(--busy-hatch);
+.past { position: absolute; top: 0; bottom: 0; left: 0; background: repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 4px); }
+.blk { position: absolute; top: 5px; bottom: 5px; border-radius: 5px; }
+.blk.free { background: var(--free); box-shadow: inset 0 0 0 1px var(--free-edge); }
+.blk.busy, .blk.maybe {
+  border: 0; margin: 0; padding: 0 7px; text-align: left; cursor: pointer;
+  font-family: var(--font-body); font-size: 12px; font-weight: 500; line-height: 42px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.blk.maybe { top: 7px; bottom: 7px; border-radius: 3px; border: 1.5px dashed var(--busy-hatch); background: transparent; }
-.due-mark { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--due); z-index: 2; }
-.due-mark span {
-  position: absolute; top: 3px; left: 4px; white-space: nowrap; font-size: 11px; font-weight: 600; line-height: 1;
-  background: var(--due); color: var(--due-ink); padding: 3px 6px; border-radius: 3px;
-}
+.blk.busy { background: var(--busy); box-shadow: inset 0 0 0 1px var(--busy-edge); color: var(--busy-ink); }
+.blk.maybe { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--busy-edge); color: var(--ink-3); font-style: italic; }
+.blk.busy:hover, .blk.busy.on, .blk.maybe:hover, .blk.maybe.on { background: var(--busy-edge); color: var(--busy-ink); z-index: 3; }
+.blk.free:hover, .blk.free.on { background: var(--free-edge); }
+.due-mark { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--due); z-index: 4; pointer-events: none; }
+.due-mark span { position: absolute; top: 3px; left: 4px; white-space: nowrap; font-size: 11px; font-weight: 600; line-height: 1; background: var(--due); color: var(--due-ink); padding: 3px 6px; border-radius: 3px; }
 .due-mark.flip span { left: auto; right: 4px; }
 .dues { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .dues li { font-size: 12px; line-height: 1.35; background: var(--due-soft); border-left: 3px solid var(--due); padding: 4px 8px; border-radius: 0 4px 4px 0; overflow-wrap: anywhere; }
 .dues b { color: var(--due); font-weight: 600; }
-.legend .ld { width: 3px; background: var(--due); border-radius: 0; }
-.nowline { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: var(--now); }
+.nowline { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: var(--now); z-index: 5; pointer-events: none; }
 .nowline::before { content: ""; position: absolute; top: 0; left: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--now); }
 .scale { position: relative; height: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
 .scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
 .scale span:first-child { transform: none; }
 .scale span:last-child { transform: translateX(-100%); }
+.none { color: var(--ink-3); font-size: 14px; margin: 0; }
 
-.slots { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.slot {
-  display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 6px;
-  background: var(--hl-soft); font-variant-numeric: tabular-nums;
-}
-.slot .t { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--ink); }
-.slot .d { font-size: 12px; color: var(--ink-2); }
-.slot.now-slot { background: var(--hl); }
-.slot.now-slot .t, .slot.now-slot .d { color: var(--hl-ink); }
-.none { color: var(--ink-3); font-size: 14px; }
+/* Hover / tap card for timeline blocks */
+.tip { position: fixed; z-index: 30; max-width: min(300px, calc(100vw - 32px)); background: var(--tip-bg); color: var(--tip-ink); padding: 8px 11px; border-radius: 8px; font-size: 13px; line-height: 1.35; box-shadow: 0 8px 24px rgba(0,0,0,0.22); pointer-events: none; display: grid; gap: 6px; }
+.tip .ti { display: grid; gap: 1px; }
+.tip b { font-weight: 600; overflow-wrap: anywhere; }
+.tip span { color: var(--tip-dim); font-size: 12px; font-variant-numeric: tabular-nums; }
 
 details.evs summary { cursor: pointer; font-size: 13px; color: var(--ink-2); width: fit-content; }
 details.evs summary:hover { color: var(--ink); }
@@ -174,29 +162,28 @@ details.evs summary:hover { color: var(--ink); }
 .evlist .en { min-width: 0; overflow-wrap: anywhere; }
 .evlist .tag { font-size: 11px; color: var(--ink-3); margin-left: 6px; }
 
-/* Planned blocks */
-.plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.prow { display: grid; grid-template-columns: 11em minmax(0, 1fr); gap: 6px 18px; align-items: start; }
-.ptime { display: grid; padding: 6px 10px; border-radius: 6px; background: var(--hl-soft); font-variant-numeric: tabular-nums; }
-.ptime .t { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--ink); }
-.ptime .d { font-size: 12px; color: var(--ink-2); }
-.prow.now-slot .ptime { background: var(--hl); }
-.prow.now-slot .ptime .t, .prow.now-slot .ptime .d { color: var(--hl-ink); }
-.pbody { min-width: 0; display: grid; gap: 4px; padding-top: 4px; }
-.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.step {
-  display: inline-flex; gap: 7px; align-items: baseline; padding: 3px 10px; border-radius: 999px;
-  border: 1px solid var(--rule); background: var(--surface);
-}
-.step .sn { font-weight: 600; font-size: 14px; }
-.step .st { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.spare, .also { font-size: 12px; color: var(--ink-3); }
-.trip { display: flex; flex-wrap: wrap; gap: 3px 12px; align-items: baseline; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+/* Free blocks and their agendas */
+.plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.prow { display: grid; grid-template-columns: 10.5em minmax(0, 1fr); gap: 6px 18px; align-items: start; }
+.ptime { display: grid; gap: 1px; padding-left: 10px; border-left: 3px solid var(--free-edge); font-variant-numeric: tabular-nums; }
+.ptime .t { font-family: var(--font-mono); font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.ptime .d { font-size: 12px; color: var(--free-ink); font-weight: 500; }
+.prow.now-slot .ptime { border-left-color: var(--free-strong); }
+.pbody { min-width: 0; display: grid; gap: 6px; }
+.agenda { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.agenda > li { display: grid; grid-template-columns: 5.2em minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.agenda .at { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.agenda .item { min-width: 0; display: grid; gap: 3px; }
+.agenda .what { font-weight: 600; font-size: 15px; }
+.agenda .until { font-weight: 400; color: var(--ink-3); font-size: 12.5px; margin-left: 6px; }
+.spare, .also { font-size: 12.5px; color: var(--ink-3); }
+.trip { display: grid; gap: 2px; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .trip b { color: var(--ink); font-weight: 600; }
-.trip a { color: var(--focus); font-weight: 600; text-decoration: none; }
+.trip .links { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
+.trip a { font-weight: 600; text-decoration: none; }
 .trip a:hover { text-decoration: underline; }
-.trip .est { flex-basis: 100%; color: var(--ink-3); font-size: 12px; }
-.trip .est button { margin-left: 8px; background: none; border: 0; padding: 0; color: var(--focus); font-weight: 600; cursor: pointer; font-size: 12px; }
+.trip .est { color: var(--ink-3); font-size: 12px; }
+.trip .est button { margin-left: 8px; background: none; border: 0; padding: 0; color: var(--link); font-weight: 600; cursor: pointer; font-size: 12px; }
 
 /* Activities */
 .acts-sec { display: grid; gap: 14px; border-top: 1px solid var(--rule); padding-top: 22px; }
@@ -209,32 +196,20 @@ details.evs summary:hover { color: var(--ink); }
 .act-row select, .act-add select { width: 100%; min-width: 0; }
 .txt { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); background: var(--surface); min-width: 0; width: 100%; }
 .txt::placeholder { color: var(--ink-3); }
-.icon-btn {
-  width: 34px; height: 34px; border-radius: 7px; border: 1px solid transparent; background: transparent;
-  color: var(--ink-3); cursor: pointer; font-size: 18px; line-height: 1;
-}
+.icon-btn { width: 34px; height: 34px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 18px; line-height: 1; }
 .icon-btn:hover { color: var(--ink); border-color: var(--rule); }
 .act-add { padding-top: 10px; border-top: 1px dashed var(--rule); }
 .act-add .btn { justify-content: center; padding-inline: 8px; }
-.toast button { margin-left: 12px; background: none; border: 0; color: var(--hl); font-weight: 600; cursor: pointer; padding: 0; }
+.toast button { margin-left: 12px; background: none; border: 0; color: var(--free-edge); font-weight: 600; cursor: pointer; padding: 0; }
 
 /* Skeleton */
 .skel .strip { background: var(--grid); }
+.skel .slots { display: flex; gap: 8px; }
 .skel .slots span { display: inline-block; width: 120px; height: 30px; border-radius: 6px; background: var(--grid); }
-
-/* Legend */
-.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--ink-3); }
-.legend i { display: inline-block; width: 18px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; }
-.legend .lf { background: var(--hl); }
-.legend .lb { background: var(--busy) repeating-linear-gradient(135deg, transparent 0 3px, var(--busy-hatch) 3px 4px); }
-.legend .lm { border: 1.5px dashed var(--busy-hatch); }
 
 /* Settings */
 details.settings { border-top: 1px solid var(--rule); padding-top: 18px; }
-details.settings > summary {
-  cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 17px; list-style: none;
-  display: flex; align-items: center; gap: 8px; width: fit-content;
-}
+details.settings > summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 17px; list-style: none; display: flex; align-items: center; gap: 8px; width: fit-content; }
 details.settings > summary::-webkit-details-marker { display: none; }
 details.settings > summary::before { content: "+"; font-family: var(--font-mono); color: var(--ink-3); width: 1ch; }
 details.settings[open] > summary::before { content: "−"; }
@@ -244,7 +219,7 @@ details.settings[open] > summary::before { content: "−"; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); background: var(--surface); }
 .check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
-.check input { margin-top: 3px; accent-color: var(--ink); }
+.check input { margin-top: 3px; accent-color: var(--free-strong); }
 .check small { color: var(--ink-3); display: block; font-size: 12px; }
 .cal-list { display: grid; gap: 6px; max-width: 560px; }
 .cal-row { display: grid; grid-template-columns: minmax(0, 1fr) 10em; gap: 12px; align-items: center; font-size: 14px; }
@@ -252,13 +227,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
 .cal-err { color: var(--now); font-size: 12px; margin-left: 4px; }
 .fine { font-size: 12px; color: var(--ink-3); max-width: 70ch; margin: 0; }
 
-.toast {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  background: var(--ink); color: var(--paper); padding: 9px 16px; border-radius: 8px; font-size: 14px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.18); z-index: 20; max-width: calc(100vw - 32px);
-}
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 9px 16px; border-radius: 8px; font-size: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.18); z-index: 20; max-width: calc(100vw - 32px); }
 
 @media (max-width: 680px) {
   .hero { grid-template-columns: 1fr; }
@@ -268,7 +237,6 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   .allday, .dues { grid-column: 1 / -1; margin-top: 4px; }
   .evlist li { grid-template-columns: 1fr; gap: 0; }
   .prow { grid-template-columns: 1fr; }
-  .ptime { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
   .act-row, .act-add { grid-template-columns: 1fr 1fr auto; grid-template-areas: "name name del" "dur rep rep" "place place ex"; }
   .act-row > :nth-child(1), .act-add > :nth-child(1) { grid-area: name; }
   .act-row > :nth-child(2), .act-add > :nth-child(2) { grid-area: dur; }
@@ -287,10 +255,11 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   </header>
 
   <section class="hero" aria-live="polite">
-    <div>
+    <div class="hero-main">
       <div class="eyebrow" id="eyebrow">Right now</div>
       <h1 class="headline" id="headline">Reading your calendars…</h1>
-      <p class="sub" id="sub">Checking the next 3 days for open time.</p>
+      <p class="sub" id="sub">Checking the next 3 days for free time.</p>
+      <div class="hero-plan" id="heroPlan" hidden></div>
     </div>
     <div class="actions">
       <button class="btn" id="refreshBtn" type="button" aria-label="Refresh calendar">
@@ -307,14 +276,15 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   <div id="notice" hidden></div>
 
   <section aria-label="Days">
-    <div class="days" id="days"></div>
-    <div class="legend" style="margin-top:12px">
-      <span><i class="lf"></i>Open</span>
-      <span><i class="lb"></i>Busy</span>
-      <span><i class="lm"></i>Maybe (not counted)</span>
+    <div class="guide">
+      <span id="guideText">Each line is one day.</span>
+      <span><i class="lb"></i>On your calendar (hover or tap to see it)</span>
+      <span><i class="lf"></i>Free</span>
+      <span><i class="lm"></i>Not answered yet, not counted</span>
       <span><i class="ld"></i>HW deadline</span>
-      <span id="legendBuf"></span>
     </div>
+    <div class="days" id="days"></div>
+    <p class="fine" id="legendBuf" style="margin-top:10px"></p>
   </section>
 
   <section class="acts-sec" aria-labelledby="actsTitle">
@@ -386,6 +356,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   </details>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
 
 <script>
 (() => {
@@ -627,16 +598,26 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       f.plan = s; slots.push(s);
     }
     const used = new Map(list.map(a => [a.id, new Set()]));
+    const placed = new Set();      // activity ids planned anywhere
     const groupDays = new Map();   // group -> Set(day): only one exercise per day
     const groupOk = (a, day) => !a.group || !(groupDays.get(a.group) && groupDays.get(a.group).has(day));
     const fits = (a, s) => isTrip(a) ? !s.items.length && tripFor(a, s.start, false).ms <= s.left : a.ms <= s.left;
     const place = (s, a) => {
       const trip = isTrip(a) ? tripFor(a, s.start, true) : null;
       const ms = trip ? trip.ms : a.ms;
-      s.items.push({ ...a, ms, trip }); s.left -= ms; used.get(a.id).add(s.day);
+      s.items.push({ ...a, ms, trip }); s.left -= ms; used.get(a.id).add(s.day); placed.add(a.id);
       if (a.group) { if (!groupDays.has(a.group)) groupDays.set(a.group, new Set()); groupDays.get(a.group).add(s.day); }
     };
+    // Pass 0: the free block you're in now (or the next one) gets as many things as fit, longest first.
+    const first = slots[0];
+    if (first) for (;;) {
+      const a = list.find(a => fits(a, first) && groupOk(a, first.day) && !first.items.some(x => x.id === a.id)
+        && !(a.repeat === "once" && placed.has(a.id)));
+      if (!a) break;
+      place(first, a);
+    }
     for (const a of list) {
+      if (placed.has(a.id)) continue;
       let best = null;
       for (const s of slots) if (fits(a, s) && groupOk(a, s.day) && (!best || s.left < best.left)) best = s;
       if (best) place(best, a);
@@ -684,21 +665,25 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const mins = r => `${Math.round(r.ms / MIN)} min${r.exact ? "" : "*"}`;
     const exact = t.there.exact && t.back.exact;
     return `<div class="trip">
-        <span>Request Uber <b>${d(t.request)}</b></span>
-        <span>${esc(mins(t.there))} ride to ${esc(c.short)}</span>
-        <span>Work out <b>${esc(fmtRange(new Date(t.atGym), new Date(t.workEnd)))}</b></span>
-        ${t.showerEnd > t.workEnd ? `<span>Shower until ${d(t.showerEnd)}</span>` : ""}
-        <span>Uber home <b>${d(t.showerEnd)}</b>, ${esc(mins(t.back))} ride</span>
-        <span>Home about ${d(t.home)}</span>
-        <a href="${esc(uberLink(HOME.pos, c.pos, c.name))}" target="_blank" rel="noopener">Book Uber there</a>
-        <a href="${esc(uberLink(c.pos, HOME.pos, "Home"))}" target="_blank" rel="noopener">Book Uber home</a>
+        <span>Request an Uber at <b>${d(t.request)}</b>, then a ${esc(mins(t.there))} ride to ${esc(c.name)}</span>
+        <span>Work out <b>${esc(fmtRange(new Date(t.atGym), new Date(t.workEnd)))}</b>${t.showerEnd > t.workEnd ? `, shower until ${d(t.showerEnd)}` : ""}</span>
+        <span>Request an Uber home at <b>${d(t.showerEnd)}</b>, ${esc(mins(t.back))} ride, home about ${d(t.home)}</span>
+        <span class="links"><a href="${esc(uberLink(HOME.pos, c.pos, c.name))}" target="_blank" rel="noopener">Book Uber there</a><a href="${esc(uberLink(c.pos, HOME.pos, "Home"))}" target="_blank" rel="noopener">Book Uber home</a></span>
         ${exact ? "" : `<span class="est">* ${rideNote()}</span>`}
       </div>`;
   }
-  function planPhrase(p) {
+  // One line per planned thing: start time, what, until when (plus the trip details for a gym run).
+  function agendaHtml(p) {
     if (!p || !p.steps || !p.steps.length) return "";
-    const n = p.steps.map(s => `<b>${esc(s.name)}</b>`);
-    return n.length === 1 ? n[0] : `${n.slice(0, -1).join(", ")}, then ${n[n.length - 1]}`;
+    return `<ol class="agenda">${p.steps.map(st => `<li><span class="at">${esc(fmtTime(st.start))}</span><div class="item">
+        <span class="what">${esc(st.name)}<span class="until">until ${esc(fmtTime(st.end))}</span></span>
+        ${st.trip ? tripHtml(st.trip) : ""}</div></li>`).join("")}</ol>`;
+  }
+  function planExtras(p) {
+    let out = "";
+    if (p.steps.length && p.spare >= 15 * MIN) out += `<span class="spare">${esc(fmtDur(p.spare))} left over at the end.</span>`;
+    if (p.also.length) out += `<span class="also">Other things that fit here: ${p.also.map(esc).join(", ")}</span>`;
+    return out;
   }
 
   // ---------- example data (shown only when the calendar can't be reached) ----------
@@ -814,7 +799,9 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const { data, ready, loaded, total } = currentData();
     renderNotice();
     renderMeta(ready, loaded, total);
-    $("legendBuf").textContent = S.buffer ? `Open time starts ${S.buffer} min after each event and ends ${S.buffer} min before the next.` : "";
+    $("legendBuf").textContent = S.buffer ? `Free time starts ${S.buffer} min after each event and ends ${S.buffer} min before the next, so you have time to get there.` : "";
+    $("guideText").textContent = `Each line is one day, ${fmtHourLong(S.startH)} to ${fmtHourLong(S.endH)}.`;
+    hideTip();
     $("refreshBtn").disabled = mode !== "live";
     $("refreshBtn").classList.toggle("spin", refreshing);
     $("copyBtn").disabled = !(data && ready);
@@ -872,6 +859,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   }
 
   function renderSkeleton(loaded, total) {
+    $("heroPlan").hidden = true;
     if (mode === "blocked") {
       $("eyebrow").textContent = "Right now";
       $("headline").textContent = "Calendar not connected";
@@ -879,7 +867,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     } else {
       $("eyebrow").textContent = "Right now";
       $("headline").textContent = "Reading your calendars…";
-      $("sub").textContent = total ? `Loaded ${loaded} of ${total} calendars. Checking the next ${DAYS} days.` : `Checking the next ${DAYS} days for open time.`;
+      $("sub").textContent = total ? `Loaded ${loaded} of ${total} calendars. Checking the next ${DAYS} days.` : `Checking the next ${DAYS} days for free time.`;
     }
     let html = "";
     for (let i = 0; i < DAYS; i++) {
@@ -904,30 +892,37 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const busyNow =blocking.filter(e => e.start <= now && e.end > now).sort((a, b) => b.end - a.end)[0];
     const nextEvent = blocking.find(e => e.start > now);
 
+    const hp = $("heroPlan");
+    const showPlan = (f, label) => {
+      const body = f && f.plan ? agendaHtml(f.plan) : "";
+      hp.innerHTML = body ? `<div class="lbl-sm">${esc(label)}</div>${body}${planExtras(f.plan)}` : "";
+      hp.hidden = !body;
+    };
     if (cur && inWindow) {
-      hl.innerHTML = `<mark>Free now</mark> until ${esc(fmtTime(cur.end))}`;
-      const nxt = nextEvent && nextEvent.start.getTime() - cur.end.getTime() <= (S.buffer + 1) * MIN ? ` Next up: <b>${esc(nextEvent.title)}</b> at ${esc(fmtTime(nextEvent.start))}.` : "";
-      const pp = planPhrase(cur.plan);
-      sub.innerHTML = `${esc(fmtDur(cur.end - now))} open.${pp ? ` Good time for ${pp}.` : ""}${nxt}`;
+      hl.innerHTML = `<span class="free-tag">Free now</span> until ${esc(fmtTime(cur.end))}`;
+      const nxt = nextEvent && nextEvent.start.getTime() - cur.end.getTime() <= (S.buffer + 1) * MIN ? ` Then <b>${esc(nextEvent.title)}</b> at ${esc(fmtTime(nextEvent.start))}.` : "";
+      sub.innerHTML = `You have ${esc(fmtDur(cur.end - now))}.${nxt}`;
+      showPlan(cur, "What you could do with it");
       return;
     }
     const next = all.find(f => f.end > now && f.start >= now);
     const nextTxt = next ? `${relDay(next.day.i, next.day.d0)}, ${fmtRange(next.start, next.end)}` : "";
     if (busyNow && inWindow) {
       hl.innerHTML = `Busy until ${esc(fmtTime(busyNow.end))}`;
-      const pp = next ? planPhrase(next.plan) : "";
-      sub.innerHTML = `In <b>${esc(busyNow.title)}</b>. ${next ? `Next open: <b>${esc(nextTxt)}</b> (${esc(fmtDur(next.end - next.start))})${pp ? `, good for ${pp}` : ""}.` : `No open time in the next ${DAYS} days.`}`;
+      sub.innerHTML = `You're in <b>${esc(busyNow.title)}</b>. ${next ? `Next free time: <b>${esc(nextTxt)}</b> (${esc(fmtDur(next.end - next.start))}).` : `No free time in the next ${DAYS} days.`}`;
+      showPlan(next, "Plan for that free time");
       return;
     }
     if (next) {
-      eb.textContent = mode === "example" ? "Next open · example" : "Next open block";
+      eb.textContent = mode === "example" ? "Next free time · example" : "Next free time";
       const label = next.day.i === 0 ? fmtTime(next.start) : `${dayName(next.day.i, next.day.d0)}, ${fmtTime(next.start)}`;
-      hl.innerHTML = `<mark>${esc(label)}</mark>`;
-      const pp = planPhrase(next.plan);
-      sub.innerHTML = `Open until ${esc(fmtTime(next.end))}, ${esc(fmtDur(next.end - next.start))}.${pp ? ` Good time for ${pp}.` : ""} ${inWindow ? "" : `Your day runs ${esc(hourLabel(S.startH))}–${esc(hourLabel(S.endH))}.`}`;
+      hl.innerHTML = `<span class="free-tag">${esc(label)}</span>`;
+      sub.innerHTML = `Free until ${esc(fmtTime(next.end))}, ${esc(fmtDur(next.end - next.start))}. ${inWindow ? "" : `Your day runs ${esc(fmtHourLong(S.startH))} to ${esc(fmtHourLong(S.endH))}.`}`;
+      showPlan(next, "Plan for that free time");
       return;
     }
-    hl.textContent = `No open time in the next ${DAYS} days`;
+    hp.hidden = true;
+    hl.textContent = `No free time in the next ${DAYS} days`;
     sub.textContent = `Nothing ${S.minSlot} min or longer between ${hourLabel(S.startH)} and ${hourLabel(S.endH)}. Try a shorter minimum or a smaller buffer in Settings.`;
   }
 
@@ -946,12 +941,12 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     let strip = "";
     for (let h = S.startH + 1; h < S.endH; h++) strip += `<div class="tick" style="left:${((h - S.startH) / (S.endH - S.startH) * 100).toFixed(3)}%"></div>`;
     if (day.i === 0 && now > day.ws) strip += `<div class="past" style="width:${pct(now).toFixed(3)}%"></div>`;
-    for (const f of day.free) strip += `<div class="blk free" style="left:${pct(f.start).toFixed(3)}%;width:${(pct(f.end) - pct(f.start)).toFixed(3)}%" title="Open ${esc(fmtRange(f.start, f.end))}"></div>`;
-    for (const e of day.events) {
+    day.free.forEach((f, j) => { strip += `<div class="blk free" data-tip data-d="${day.i}" data-f="${j}" style="left:${pct(f.start).toFixed(3)}%;width:${(pct(f.end) - pct(f.start)).toFixed(3)}%"></div>`; });
+    day.events.forEach((e, j) => {
       const counts = !e.maybe || S.countMaybe;
-      const l = pct(e.start), w = Math.max(0.4, pct(e.end) - l);
-      strip += `<div class="blk ${counts ? "busy" : "maybe"}" style="left:${l.toFixed(3)}%;width:${w.toFixed(3)}%" title="${esc(e.title)} · ${esc(fmtRange(e.start, e.end))}${counts ? "" : " (maybe)"}"></div>`;
-    }
+      const l = pct(e.start), w = Math.max(0.6, pct(e.end) - l);
+      strip += `<button type="button" class="blk ${counts ? "busy" : "maybe"}" data-tip data-d="${day.i}" data-e="${j}" style="left:${l.toFixed(3)}%;width:${w.toFixed(3)}%" aria-label="${esc(e.title)}, ${esc(fmtRange(e.start, e.end))}">${esc(e.title)}</button>`;
+    });
     const marks = new Map();
     for (const dl of day.deadlines) {
       const p = dl.at ? pct(dl.at) : 100;
@@ -973,21 +968,15 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       ? `<ul class="plan">${day.free.map(f => {
           const isNow = day.i === 0 && f.start.getTime() - now <= 5 * MIN && f.end > now;
           const p = f.plan || { steps: [], spare: 0, also: [] };
-          let body = "";
-          if (p.steps.length) {
-            body = `<ol class="steps">${p.steps.map(st => `<li class="step"><span class="sn">${esc(st.name)}</span><span class="st">${esc(fmtRange(st.start, st.end))}</span></li>`).join("")}</ol>`;
-            body += p.steps.filter(st => st.trip).map(st => tripHtml(st.trip)).join("");
-            if (p.spare >= 15 * MIN) body +=`<span class="spare">+${esc(fmtDur(p.spare))} to spare</span>`;
-          } else if (hasActs) {
-            body = `<span class="spare">Too short for anything on your list. A good break.</span>`;
-          }
-          if (p.also.length) body += `<span class="also">Also fits: ${p.also.map(esc).join(", ")}</span>`;
-          return `<li class="prow${isNow ? " now-slot" : ""}"><div class="ptime"><span class="t">${esc(fmtRange(f.start, f.end))}</span><span class="d">${esc(fmtDur(f.end - f.start))} open</span></div><div class="pbody">${body}</div></li>`;
+          let body = agendaHtml(p);
+          if (!p.steps.length && hasActs) body = `<span class="spare">Too short for anything on your list. A good break.</span>`;
+          body += planExtras(p);
+          return `<li class="prow${isNow ? " now-slot" : ""}"><div class="ptime"><span class="t">${esc(fmtRange(f.start, f.end))}</span><span class="d">${isNow ? "Now · " : ""}${esc(fmtDur(f.end - f.start))} free</span></div><div class="pbody">${body}</div></li>`;
         }).join("")}</ul>`
-      : `<p class="none">${day.i === 0 && now >= day.we ? "Your day is over." : `No open blocks of ${S.minSlot} min or more.`}</p>`;
+      : `<p class="none">${day.i === 0 && now >= day.we ? "Your day is over." : `No free blocks of ${S.minSlot} min or more.`}</p>`;
 
     const evs = day.events.length
-      ? `<details class="evs"><summary>${day.events.length} event${day.events.length === 1 ? "" : "s"}</summary><ul class="evlist">${day.events.map(e =>
+      ? `<details class="evs"><summary>List all ${day.events.length} event${day.events.length === 1 ? "" : "s"}</summary><ul class="evlist">${day.events.map(e =>
           `<li><span class="et">${esc(fmtRange(e.start, e.end))}</span><span class="en">${esc(e.title)}${e.maybe ? `<span class="tag">maybe${S.countMaybe ? "" : ", not counted"}</span>` : ""}${e.cal && calendars && calendars.length > 1 ? `<span class="tag">${esc(e.cal)}</span>` : ""}</span></li>`).join("")}</ul></details>`
       : "";
 
@@ -1000,16 +989,61 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       <div class="day-head">
         <div class="day-name">${esc(dayName(day.i, day.d0))}</div>
         <div class="day-date">${esc(shortDay(day.d0))}</div>
-        <div class="day-total"><strong>${esc(fmtDur(day.total))}</strong> open</div>
+        <div class="day-total"><strong>${esc(fmtDur(day.total))}</strong> free</div>
         ${dues}
         ${allDay}
       </div>
       <div class="day-body">
-        <div class="strip-wrap"><div class="strip" role="img" aria-label="${esc(srText)}">${strip}</div>${scaleHtml()}</div>
+        <div class="strip-wrap"><div class="strip" role="group" aria-label="${esc(srText)}">${strip}</div>${scaleHtml()}</div>
         ${slots}
         ${evs}
       </div>
     </article>`;
+  }
+
+  // ---------- hover / tap card for timeline blocks ----------
+  let tipEl = null, tipPinned = false;
+  function tipContent(el) {
+    const day = lastDays && lastDays[+el.dataset.d]; if (!day) return "";
+    const line = (title, sub) => `<div class="ti"><b>${esc(title)}</b><span>${sub}</span></div>`;
+    if (el.dataset.e !== undefined) {
+      const e = day.events[+el.dataset.e]; if (!e) return "";
+      const all = [e, ...day.events.filter(x => x !== e && x.start < e.end && x.end > e.start)];
+      return all.map(x => line(x.title, esc(fmtRange(x.start, x.end))
+        + (x.maybe ? " · not answered yet" : "") + (x.cal ? ` · ${esc(x.cal)}` : ""))).join("");
+    }
+    const f = day.free[+el.dataset.f]; if (!f) return "";
+    const p = f.plan && f.plan.steps && f.plan.steps.length ? ` · plan: ${f.plan.steps.map(s => esc(s.name)).join(", ")}` : "";
+    return line("Free", `${esc(fmtRange(f.start, f.end))} · ${esc(fmtDur(f.end - f.start))}${p}`);
+  }
+  function showTip(el, pin) {
+    const html = tipContent(el); if (!html) return hideTip();
+    if (tipEl && tipEl !== el) tipEl.classList.remove("on");
+    tipEl = el; tipPinned = !!pin; el.classList.add("on");
+    const t = $("tip"); t.innerHTML = html; t.hidden = false;
+    const r = el.getBoundingClientRect(), tw = t.offsetWidth, th = t.offsetHeight;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), window.innerWidth - tw - 8);
+    const top = r.top - th - 8 >= 8 ? r.top - th - 8 : r.bottom + 8;
+    t.style.left = `${left}px`; t.style.top = `${top}px`;
+  }
+  function hideTip() {
+    const t = $("tip"); if (t) t.hidden = true;
+    if (tipEl) tipEl.classList.remove("on");
+    tipEl = null; tipPinned = false;
+  }
+  function bindTips() {
+    const days = $("days");
+    days.addEventListener("pointerover", e => { const b = e.target.closest("[data-tip]"); if (b && e.pointerType === "mouse") showTip(b); });
+    days.addEventListener("pointerout", e => { const b = e.target.closest("[data-tip]"); if (b && b === tipEl && !tipPinned && !b.contains(e.relatedTarget)) hideTip(); });
+    days.addEventListener("focusin", e => { const b = e.target.closest("[data-tip]"); if (b) showTip(b); });
+    days.addEventListener("focusout", () => { if (!tipPinned) hideTip(); });
+    days.addEventListener("click", e => {
+      const b = e.target.closest("[data-tip]"); if (!b) return;
+      if (b === tipEl && tipPinned) hideTip(); else showTip(b, true);
+    });
+    document.addEventListener("click", e => { if (tipEl && !e.target.closest("[data-tip]")) hideTip(); });
+    window.addEventListener("scroll", () => { if (tipEl) hideTip(); }, { passive: true });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") hideTip(); });
   }
 
   // ---------- settings UI ----------
@@ -1228,6 +1262,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   // ---------- boot ----------
   async function boot() {
     bind();
+    bindTips();
     bindActs();
     renderActs();
     render();

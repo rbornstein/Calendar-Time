@@ -45,5 +45,11 @@ Live page: https://claude.ai/artifact/RBFSvFPhzKhjNqMdxM6wiW (source: `index.htm
 - Each trip has "Book Uber there" / "Book Uber home" links (m.uber.com universal links with pickup and dropoff filled in).
 - Not done yet: 24 Hour Fitness class schedules (the trip uses the open block's start, not a class time).
 
+## Redesign Nov 4
+- No yellow: free time is sage green, calendar events are gray blocks labeled with their names on the timeline.
+- Hovering (or tapping on a phone) any block shows a card with the event's name, time and calendar, including events that overlap it. Hovering free time shows its length and plan.
+- The top section lists everything planned for the current or next free block (start time, what, until when). The planner fills that block first with as many activities as fit, longest first, then plans the other blocks.
+- A key above the timelines explains the colors.
+
 ## Later
 - ClassPass cycling classes within 10 miles of 9450 Gilman Dr. ClassPass blocks automated access, so this needs the user's own browser (Claude in Chrome or the Claude desktop app) or pasted results.
