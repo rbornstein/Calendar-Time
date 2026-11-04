@@ -24,6 +24,9 @@
   --warn-bg: #FFF5DA;
   --warn-ink: #6B4B00;
   --focus: #2E62E6;
+  --due: #6A3FD6;
+  --due-ink: #FFFFFF;
+  --due-soft: #EEE8FD;
   --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -34,6 +37,7 @@
     --rule: #262D3A; --grid: #1C2230; --hl: #E8C33E; --hl-soft: #3A3215; --hl-ink: #1C1600;
     --busy: #343C4B; --busy-hatch: #434C5D; --busy-ink: #D3D9E4; --now: #FF676C;
     --warn-bg: #2E2711; --warn-ink: #F0D489; --focus: #7FA2FF; color-scheme: dark;
+    --due: #B497FF; --due-ink: #170B35; --due-soft: #2A2145;
   }
 }
 :root[data-theme="dark"] {
@@ -41,6 +45,7 @@
   --rule: #262D3A; --grid: #1C2230; --hl: #E8C33E; --hl-soft: #3A3215; --hl-ink: #1C1600;
   --busy: #343C4B; --busy-hatch: #434C5D; --busy-ink: #D3D9E4; --now: #FF676C;
   --warn-bg: #2E2711; --warn-ink: #F0D489; --focus: #7FA2FF; color-scheme: dark;
+  --due: #B497FF; --due-ink: #170B35; --due-soft: #2A2145;
 }
 
 body {
@@ -133,6 +138,16 @@ button, select, input { font: inherit; color: inherit; }
   box-shadow: inset 0 0 0 1px var(--busy-hatch);
 }
 .blk.maybe { top: 7px; bottom: 7px; border-radius: 3px; border: 1.5px dashed var(--busy-hatch); background: transparent; }
+.due-mark { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--due); z-index: 2; }
+.due-mark span {
+  position: absolute; top: 3px; left: 4px; white-space: nowrap; font-size: 11px; font-weight: 600; line-height: 1;
+  background: var(--due); color: var(--due-ink); padding: 3px 6px; border-radius: 3px;
+}
+.due-mark.flip span { left: auto; right: 4px; }
+.dues { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.dues li { font-size: 12px; line-height: 1.35; background: var(--due-soft); border-left: 3px solid var(--due); padding: 4px 8px; border-radius: 0 4px 4px 0; overflow-wrap: anywhere; }
+.dues b { color: var(--due); font-weight: 600; }
+.legend .ld { width: 3px; background: var(--due); border-radius: 0; }
 .nowline { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: var(--now); }
 .nowline::before { content: ""; position: absolute; top: 0; left: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--now); }
 .scale { position: relative; height: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
@@ -182,7 +197,9 @@ details.evs summary:hover { color: var(--ink); }
 .sec-head { display: grid; gap: 4px; }
 .sec-head h2 { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: -0.015em; margin: 0; }
 .acts { display: grid; gap: 8px; }
-.act-row, .act-add { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em 11em 40px; gap: 8px; align-items: center; }
+.check.ex { align-items: center; font-size: 13px; }
+.check.ex input { margin-top: 0; }
+.act-row, .act-add { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em 11em auto 40px; gap: 8px; align-items: center; }
 .act-row select, .act-add select { width: 100%; min-width: 0; }
 .txt { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); background: var(--surface); min-width: 0; width: 100%; }
 .txt::placeholder { color: var(--ink-3); }
@@ -223,7 +240,9 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
 .check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
 .check input { margin-top: 3px; accent-color: var(--ink); }
 .check small { color: var(--ink-3); display: block; font-size: 12px; }
-.cal-list { display: grid; gap: 6px; }
+.cal-list { display: grid; gap: 6px; max-width: 560px; }
+.cal-row { display: grid; grid-template-columns: minmax(0, 1fr) 10em; gap: 12px; align-items: center; font-size: 14px; }
+.cal-row label { min-width: 0; overflow-wrap: anywhere; }
 .cal-err { color: var(--now); font-size: 12px; margin-left: 4px; }
 .fine { font-size: 12px; color: var(--ink-3); max-width: 70ch; margin: 0; }
 
@@ -240,12 +259,16 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   .day { grid-template-columns: 1fr; gap: 12px; }
   .day-head { grid-template-columns: auto auto; justify-content: space-between; align-items: baseline; }
   .day-total { margin-top: 0; grid-column: 2; grid-row: 1 / span 2; align-self: center; }
-  .allday { grid-column: 1 / -1; margin-top: 4px; }
+  .allday, .dues { grid-column: 1 / -1; margin-top: 4px; }
   .evlist li { grid-template-columns: 1fr; gap: 0; }
   .prow { grid-template-columns: 1fr; }
   .ptime { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-  .act-row, .act-add { grid-template-columns: 1fr 1fr 40px; }
-  .act-row .txt, .act-add .txt { grid-column: 1 / -1; }
+  .act-row, .act-add { grid-template-columns: 1fr 1fr auto; grid-template-areas: "name name del" "dur rep ex"; }
+  .act-row > :nth-child(1), .act-add > :nth-child(1) { grid-area: name; }
+  .act-row > :nth-child(2), .act-add > :nth-child(2) { grid-area: dur; }
+  .act-row > :nth-child(3), .act-add > :nth-child(3) { grid-area: rep; }
+  .act-row > :nth-child(4), .act-add > :nth-child(4) { grid-area: ex; }
+  .act-row > :nth-child(5), .act-add > :nth-child(5) { grid-area: del; justify-self: end; }
 }
 @media (prefers-reduced-motion: reduce) { .spin svg { animation: none; } }
 </style>
@@ -282,6 +305,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       <span><i class="lf"></i>Open</span>
       <span><i class="lb"></i>Busy</span>
       <span><i class="lm"></i>Maybe (not counted)</span>
+      <span><i class="ld"></i>HW deadline</span>
       <span id="legendBuf"></span>
     </div>
   </section>
@@ -289,7 +313,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   <section class="acts-sec" aria-labelledby="actsTitle">
     <div class="sec-head">
       <h2 id="actsTitle">Things to fit in</h2>
-      <p class="fine">Each open block gets a plan from this list. The longest activities go into the blocks they fit best. Leftover time then gets anything you do once a day that isn't planned yet that day, plus one session of anything set to every open block.</p>
+      <p class="fine">Each open block gets a plan from this list. The longest activities go into the blocks they fit best. Leftover time then gets anything you do once a day that isn't planned yet that day, plus one session of anything set to every open block. Activities ticked as exercise are suggested at most once a day in total, so a gym day isn't also a pool day.</p>
     </div>
     <p class="fine" id="actsNote" hidden></p>
     <div class="acts" id="acts"></div>
@@ -297,6 +321,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       <input class="txt" id="newName" type="text" placeholder="Add something, like “Call home”" maxlength="60" aria-label="Activity name" required>
       <select id="newMin" aria-label="How long it takes"></select>
       <select id="newRep" aria-label="How often"></select>
+      <label class="check ex"><input type="checkbox" id="newEx"><span>Exercise</span></label>
       <button class="btn" type="submit" aria-label="Add activity">Add</button>
     </form>
   </section>
@@ -335,7 +360,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
         <span class="lbl">Calendars</span>
         <div class="cal-list" id="calList"><span class="fine">Your calendars appear here once connected.</span></div>
       </div>
-      <p class="fine" style="grid-column:1/-1">Declined events, events marked "free", and all-day events never block time. Settings are saved in this browser only.</p>
+      <p class="fine" style="grid-column:1/-1">“Blocks time” calendars count as busy. “HW deadlines” calendars never block time; their events show as deadline markers instead. Declined events, events marked "free", and all-day events never block time. Settings are saved in this browser only.</p>
     </div>
   </details>
 </div>
@@ -350,12 +375,12 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   const DENIALS = new Set(["needs_reauth","server_not_connected","selection_required","server_not_found","blocked_by_policy","approval_required","not_in_manifest","not_granted","capability_disabled","capability_removed","consent_required","user_changed"]);
 
   // ---------- settings (per-browser convenience) ----------
-  const DEFAULTS = { v: 2, startH: 9, endH: 22, buffer: 10, minSlot: 30, countMaybe: false, hidden: [] };
+  const DEFAULTS = { v: 2, startH: 9, endH: 22, buffer: 10, minSlot: 30, countMaybe: false, hidden: [], calModes: {} };
   function loadSettings() {
     try {
       const s = JSON.parse(localStorage.getItem("ct.settings") || "{}");
       if (s.v !== 2) { delete s.startH; s.v = 2; }   // day now starts at 9am by default
-      return { ...DEFAULTS, ...s, hidden: Array.isArray(s.hidden) ? s.hidden : [] };
+      return { ...DEFAULTS, ...s, hidden: Array.isArray(s.hidden) ? s.hidden : [], calModes: s.calModes && typeof s.calModes === "object" ? s.calModes : {} };
     }
     catch { return { ...DEFAULTS }; }
   }
@@ -379,8 +404,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   const REPEATS = [["once", "Once in 3 days"], ["daily", "Once a day"], ["anytime", "Every open block"]];
   const DURS = [15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 240];
   const EXAMPLE_ACTS = [
-    { id: "gym", name: "Gym (off campus)", minutes: 90, repeat: "daily", order: 1 },
-    { id: "pool", name: "Pool (on campus)", minutes: 60, repeat: "daily", order: 2 },
+    { id: "gym", name: "Gym (off campus)", minutes: 90, repeat: "daily", order: 1, group: "exercise" },
+    { id: "pool", name: "Pool (on campus)", minutes: 60, repeat: "daily", order: 2, group: "exercise" },
     { id: "study", name: "Study", minutes: 45, repeat: "anytime", order: 3 },
     { id: "coffee", name: "Coffee with a friend", minutes: 45, repeat: "once", order: 4 },
     { id: "laundry", name: "Laundry", minutes: 90, repeat: "once", order: 5 }
@@ -424,10 +449,23 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
 
   // ---------- event normalisation ----------
   function normalise(rawByCal) {
-    const seen = new Set(), timed = [], allDay = [];
-    for (const [calName, events] of rawByCal) {
+    const seen = new Set(), timed = [], allDay = [], deadlines = [];
+    for (const [cal, events] of rawByCal) {
+      const calName = cal.summary;
       for (const e of events) {
         if (!e || e.status === "cancelled") continue;
+        if (calMode(cal) === "deadlines") {
+          const title = e.summary || "Deadline";
+          if (e.start && e.start.date && !e.start.dateTime) {
+            const k = "dl|" + title + "|" + e.start.date;
+            if (!seen.has(k)) { seen.add(k); deadlines.push({ title, allDay: true, key: e.start.date, at: null }); }
+          } else {
+            const s = new Date(e.start && e.start.dateTime);
+            const k = "dl|" + title + "|" + s.getTime();
+            if (!isNaN(s) && !seen.has(k)) { seen.add(k); deadlines.push({ title, allDay: false, key: dayKey(s), at: s }); }
+          }
+          continue;
+        }
         const self = (e.attendees || []).find(a => a.self);
         const rs = self && self.responseStatus;
         if (rs === "declined") continue;
@@ -446,7 +484,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       }
     }
     timed.sort((a, b) => a.start - b.start);
-    return { timed, allDay };
+    deadlines.sort((a, b) => (a.at ? a.at.getTime() : Infinity) - (b.at ? b.at.getTime() : Infinity));
+    return { timed, allDay, deadlines };
   }
 
   // ---------- availability ----------
@@ -476,7 +515,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       if (cur < we) push(cur, we);
       const key = dayKey(d0);
       const allDay = data.allDay.filter(a => a.from <= key && key < a.to || a.from === key);
-      days.push({ i, d0, ws, we, events, free, allDay, total: free.reduce((t, f) => t + (f.end - f.start), 0) });
+      const deadlines = (data.deadlines || []).filter(dl => dl.key === key);
+      days.push({ i, d0, ws, we, events, free, allDay, deadlines, total: free.reduce((t, f) => t + (f.end - f.start), 0) });
     }
     return days;
   }
@@ -493,17 +533,22 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       f.plan = s; slots.push(s);
     }
     const used = new Map(list.map(a => [a.id, new Set()]));
-    const place = (s, a) => { s.items.push(a); s.left -= a.ms; used.get(a.id).add(s.day); };
+    const groupDays = new Map();   // group -> Set(day): only one exercise per day
+    const groupOk = (a, day) => !a.group || !(groupDays.get(a.group) && groupDays.get(a.group).has(day));
+    const place = (s, a) => {
+      s.items.push(a); s.left -= a.ms; used.get(a.id).add(s.day);
+      if (a.group) { if (!groupDays.has(a.group)) groupDays.set(a.group, new Set()); groupDays.get(a.group).add(s.day); }
+    };
     for (const a of list) {
       let best = null;
-      for (const s of slots) if (s.left >= a.ms && (!best || s.left < best.left)) best = s;
+      for (const s of slots) if (s.left >= a.ms && groupOk(a, s.day) && (!best || s.left < best.left)) best = s;
       if (best) place(best, a);
     }
     // Fill: daily things not yet planned that day first, then one session of an "as often as fits" activity per block.
     for (const s of slots) {
       for (;;) {
-        const a = list.find(a => a.ms <= s.left && a.repeat === "daily" && !used.get(a.id).has(s.day))
-               || list.find(a => a.ms <= s.left && a.repeat === "anytime" && !s.items.some(x => x.id === a.id));
+        const a = list.find(a => a.ms <= s.left && a.repeat === "daily" && !used.get(a.id).has(s.day) && groupOk(a, s.day))
+               || list.find(a => a.ms <= s.left && a.repeat === "anytime" && !s.items.some(x => x.id === a.id) && groupOk(a, s.day));
         if (!a) break;
         place(s, a);
       }
@@ -534,11 +579,21 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       mk(0, 9, 0, 9, 50, "Lecture"), mk(0, 11, 0, 12, 20, "Discussion section"), mk(0, 14, 0, 15, 0, "Lab meeting"), mk(0, 18, 30, 20, 0, "Club meeting"),
       mk(1, 8, 0, 9, 20, "Lecture"), mk(1, 12, 0, 13, 0, "Lunch with friend", true), mk(1, 15, 30, 17, 0, "Study group"),
       mk(2, 10, 0, 11, 50, "Exam review"), mk(2, 13, 0, 16, 0, "Work shift"), mk(2, 19, 0, 21, 0, "Dinner")
-    ], allDay: [] };
+    ], allDay: [], deadlines: [
+      (() => { const d = dayStart(0), at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 17, 0); return { title: "Problem set 4", allDay: false, key: dayKey(at), at }; })(),
+      (() => { const d = dayStart(2), at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59); return { title: "Lab report", allDay: false, key: dayKey(at), at }; })()
+    ] };
   }
 
   // ---------- data loading ----------
-  function visibleCals() { return (calendars || []).filter(c => !S.hidden.includes(c.id)); }
+  // busy: counts as busy · deadlines: shown as HW deadline markers, never blocks time · off: ignored
+  function calMode(c) {
+    const m = S.calModes[c.id];
+    if (m === "busy" || m === "deadlines" || m === "off") return m;
+    if (S.hidden.includes(c.id)) return "off";
+    return /projects\s*(&|and)\s*exams/i.test(c.summary || "") ? "deadlines" : "busy";
+  }
+  function visibleCals() { return (calendars || []).filter(c => calMode(c) !== "off"); }
 
   async function loadCalendars() {
     try {
@@ -618,7 +673,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     for (const c of vis) {
       const st = byCal.get(c.id);
       if (st && (st.events || st.error)) loaded++;
-      if (st && st.events) raw.push([c.summary, st.events]);
+      if (st && st.events) raw.push([c, st.events]);
     }
     return { data: normalise(raw), ready: loaded >= vis.length, loaded, total: vis.length };
   }
@@ -636,10 +691,12 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const days = buildDays(data);
     planDays(days);
     lastDays = days;
+    heroDue = "";
     renderHero(days, data);
+    if (heroDue) $("sub").innerHTML += heroDue;
     $("days").innerHTML = days.map(renderDay).join("");
   }
-  let lastDays = null;
+  let lastDays = null, heroDue = "";
 
   function renderMeta(ready, loaded, total) {
     const el = $("meta");
@@ -710,7 +767,9 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const inWindow = nowT >= today.ws && nowT < today.we;
     const cur = all.find(f => f.day.i === 0 && f.start.getTime() - nowT <= 5 * MIN && f.end > now);
     const blocking = data.timed.filter(e => !e.maybe || S.countMaybe);
-    const busyNow = blocking.filter(e => e.start <= now && e.end > now).sort((a, b) => b.end - a.end)[0];
+    const dueSoon = (data.deadlines || []).filter(dl => dl.allDay ? dl.key === dayKey(now) : (dl.at > now && dl.key === dayKey(now)));
+    heroDue = dueSoon.length ? ` <b>HW deadline</b> today: ${dueSoon.map(dl => `${esc(dl.title)}${dl.at ? ` at ${esc(fmtTime(dl.at))}` : ""}`).join("; ")}.` : "";
+    const busyNow =blocking.filter(e => e.start <= now && e.end > now).sort((a, b) => b.end - a.end)[0];
     const nextEvent = blocking.find(e => e.start > now);
 
     if (cur && inWindow) {
@@ -761,9 +820,22 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       const l = pct(e.start), w = Math.max(0.4, pct(e.end) - l);
       strip += `<div class="blk ${counts ? "busy" : "maybe"}" style="left:${l.toFixed(3)}%;width:${w.toFixed(3)}%" title="${esc(e.title)} · ${esc(fmtRange(e.start, e.end))}${counts ? "" : " (maybe)"}"></div>`;
     }
+    const marks = new Map();
+    for (const dl of day.deadlines) {
+      const p = dl.at ? pct(dl.at) : 100;
+      const k = p.toFixed(1);
+      if (!marks.has(k)) marks.set(k, { p, items: [] });
+      marks.get(k).items.push(dl);
+    }
+    for (const { p, items } of marks.values()) {
+      const tip = items.map(dl => `HW deadline: ${dl.title}${dl.at ? ` · ${fmtTime(dl.at)}` : " · all day"}`).join("\n");
+      const label = items.length > 1 ? `${items.length} HW deadlines` : "HW deadline";
+      strip += `<div class="due-mark${p > 72 ? " flip" : ""}" style="left:${Math.min(99.6, Math.max(0.4, p)).toFixed(3)}%" title="${esc(tip)}"><span>${esc(label)}</span></div>`;
+    }
     if (day.i === 0 && now >= day.ws && now <= day.we) strip += `<div class="nowline" style="left:${pct(now).toFixed(3)}%" title="Now"></div>`;
 
-    const srText = day.free.length ? `Open: ${day.free.map(f => fmtRange(f.start, f.end)).join(", ")}` : "No open time";
+    const srText = (day.free.length ? `Open: ${day.free.map(f => fmtRange(f.start, f.end)).join(", ")}` : "No open time")
+      + day.deadlines.map(dl => `. HW deadline: ${dl.title}${dl.at ? ` at ${fmtTime(dl.at)}` : ""}`).join("");
     const hasActs = acts && acts.length > 0;
     const slots = day.free.length
       ? `<ul class="plan">${day.free.map(f => {
@@ -786,13 +858,17 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
           `<li><span class="et">${esc(fmtRange(e.start, e.end))}</span><span class="en">${esc(e.title)}${e.maybe ? `<span class="tag">maybe${S.countMaybe ? "" : ", not counted"}</span>` : ""}${e.cal && calendars && calendars.length > 1 ? `<span class="tag">${esc(e.cal)}</span>` : ""}</span></li>`).join("")}</ul></details>`
       : "";
 
-    const allDay = day.allDay.length ? `<div class="allday">${day.allDay.map(a => `<span title="All-day, doesn't block time">${esc(a.title)}</span>`).join("")}</div>` : "";
+    const dues = day.deadlines.length
+      ? `<ul class="dues">${day.deadlines.map(dl => `<li><b>HW deadline</b> · ${dl.at ? esc(fmtTime(dl.at)) : "all day"}<br>${esc(dl.title)}</li>`).join("")}</ul>`
+      : "";
+    const allDay = day.allDay.length ?`<div class="allday">${day.allDay.map(a => `<span title="All-day, doesn't block time">${esc(a.title)}</span>`).join("")}</div>` : "";
 
     return `<article class="day">
       <div class="day-head">
         <div class="day-name">${esc(dayName(day.i, day.d0))}</div>
         <div class="day-date">${esc(shortDay(day.d0))}</div>
         <div class="day-total"><strong>${esc(fmtDur(day.total))}</strong> open</div>
+        ${dues}
         ${allDay}
       </div>
       <div class="day-body">
@@ -818,10 +894,13 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const box = $("calList");
     if (!calendars) return;
     if (!calendars.length) { box.innerHTML = `<span class="fine">No calendars found on this Google account.</span>`; return; }
+    const modes = [["busy", "Blocks time"], ["deadlines", "HW deadlines"], ["off", "Ignore"]];
     box.innerHTML = calendars.map((c, i) => {
       const st = byCal.get(c.id);
       const err = st && st.error && !st.events ? `<span class="cal-err">couldn't load</span>` : "";
-      return `<label class="check"><input type="checkbox" id="cal-${i}" data-cal="${esc(c.id)}" ${S.hidden.includes(c.id) ? "" : "checked"}><span>${esc(c.summary)}${err}</span></label>`;
+      const m = calMode(c);
+      return `<div class="cal-row"><label for="cal-${i}">${esc(c.summary)}${err}</label>
+        <select id="cal-${i}" data-cal="${esc(c.id)}">${modes.map(([v, l]) => `<option value="${v}"${v === m ? " selected" : ""}>${l}</option>`).join("")}</select></div>`;
     }).join("");
   }
 
@@ -836,7 +915,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     ["startH", "endH", "buffer", "minSlot", "countMaybe"].forEach(id => $(id).addEventListener("change", onChange));
     $("calList").addEventListener("change", e => {
       const id = e.target && e.target.getAttribute("data-cal"); if (!id) return;
-      S.hidden = e.target.checked ? S.hidden.filter(x => x !== id) : [...new Set([...S.hidden, id])];
+      S.calModes = { ...S.calModes, [id]: e.target.value };
+      S.hidden = S.hidden.filter(x => x !== id);
       saveSettings();
       if (M && mode === "live") watchEvents();
       render();
@@ -889,7 +969,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const minutes = Math.round(+d.minutes);
     if (!(minutes > 0)) return null;
     const repeat = REPEATS.some(r => r[0] === d.repeat) ? d.repeat : "daily";
-    return { id, name: d.name.trim().slice(0, 60), minutes, repeat, order: +d.order || 0 };
+    return { id, name: d.name.trim().slice(0, 60), minutes, repeat, order: +d.order || 0, group: d.group === "exercise" ? "exercise" : "" };
   }
   function durOptions(sel) {
     const list = DURS.includes(sel) ? DURS : [...DURS, sel].sort((a, b) => a - b);
@@ -914,6 +994,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
           <input class="txt" id="an-${esc(a.id)}" data-f="name" type="text" maxlength="60" value="${esc(a.name)}" aria-label="Activity name">
           <select id="am-${esc(a.id)}" data-f="minutes" aria-label="How long ${esc(a.name)} takes">${durOptions(a.minutes)}</select>
           <select id="ar-${esc(a.id)}" data-f="repeat" aria-label="How often to suggest ${esc(a.name)}">${repOptions(a.repeat)}</select>
+          <label class="check ex"><input type="checkbox" id="ax-${esc(a.id)}" data-f="group"${a.group === "exercise" ? " checked" : ""}><span>Exercise</span></label>
           <button class="icon-btn" type="button" data-del="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">×</button>
         </div>`).join("");
     } else {
@@ -937,7 +1018,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   }
   async function removeAct(id) {
     const a = acts && acts.find(x => x.id === id); if (!a) return;
-    const body = { name: a.name, minutes: a.minutes, repeat: a.repeat, order: a.order };
+    const body = { name: a.name, minutes: a.minutes, repeat: a.repeat, group: a.group || "", order: a.order };
     const restore = async () => {
       if (!DB) return localApply(() => acts.push({ id, ...body }));
       try { await DB.doc("activities/" + id).set(body); } catch (e) { toast(dbErrMsg(e)); }
@@ -945,8 +1026,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     if (!DB) { localApply(() => { acts = acts.filter(x => x.id !== id); }); toast(`Removed ${a.name}`, restore); return; }
     try { await DB.doc("activities/" + id).delete(); toast(`Removed ${a.name}`, restore); } catch (e) { toast(dbErrMsg(e)); }
   }
-  async function addAct(name, minutes, repeat) {
-    const body = { name, minutes, repeat, order: Date.now() };
+  async function addAct(name, minutes, repeat, group) {
+    const body = { name, minutes, repeat, group, order: Date.now() };
     if (!DB) { localApply(() => acts.push({ id: "local-" + body.order, ...body })); return true; }
     try { await DB.collection("activities").add(body); return true; } catch (e) { toast(dbErrMsg(e)); return false; }
   }
@@ -961,6 +1042,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       if (f === "name") { const v = e.target.value.trim().slice(0, 60); if (v) updateAct(id, { name: v }); else renderActs(); }
       else if (f === "minutes") updateAct(id, { minutes: +e.target.value });
       else if (f === "repeat") updateAct(id, { repeat: e.target.value });
+      else if (f === "group") updateAct(id, { group: e.target.checked ? "exercise" : "" });
     });
     $("acts").addEventListener("click", e => {
       const b = e.target.closest("[data-del]"); if (b) removeAct(b.getAttribute("data-del"));
@@ -969,8 +1051,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       e.preventDefault();
       const name = $("newName").value.trim().slice(0, 60);
       if (!name || !acts) return;
-      const ok = await addAct(name, +$("newMin").value, $("newRep").value);
-      if (ok) { $("newName").value = ""; $("newName").focus(); }
+      const ok = await addAct(name, +$("newMin").value, $("newRep").value, $("newEx").checked ? "exercise" : "");
+      if (ok) { $("newName").value = ""; $("newEx").checked = false; $("newName").focus(); }
     });
   }
 
