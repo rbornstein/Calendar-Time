@@ -159,6 +159,42 @@ details.evs summary:hover { color: var(--ink); }
 .evlist .en { min-width: 0; overflow-wrap: anywhere; }
 .evlist .tag { font-size: 11px; color: var(--ink-3); margin-left: 6px; }
 
+/* Planned blocks */
+.plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.prow { display: grid; grid-template-columns: 11em minmax(0, 1fr); gap: 6px 18px; align-items: start; }
+.ptime { display: grid; padding: 6px 10px; border-radius: 6px; background: var(--hl-soft); font-variant-numeric: tabular-nums; }
+.ptime .t { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--ink); }
+.ptime .d { font-size: 12px; color: var(--ink-2); }
+.prow.now-slot .ptime { background: var(--hl); }
+.prow.now-slot .ptime .t, .prow.now-slot .ptime .d { color: var(--hl-ink); }
+.pbody { min-width: 0; display: grid; gap: 4px; padding-top: 4px; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.step {
+  display: inline-flex; gap: 7px; align-items: baseline; padding: 3px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--surface);
+}
+.step .sn { font-weight: 600; font-size: 14px; }
+.step .st { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.spare, .also { font-size: 12px; color: var(--ink-3); }
+
+/* Activities */
+.acts-sec { display: grid; gap: 14px; border-top: 1px solid var(--rule); padding-top: 22px; }
+.sec-head { display: grid; gap: 4px; }
+.sec-head h2 { font-family: var(--font-display); font-weight: 600; font-size: 22px; letter-spacing: -0.015em; margin: 0; }
+.acts { display: grid; gap: 8px; }
+.act-row, .act-add { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em 11em 40px; gap: 8px; align-items: center; }
+.act-row select, .act-add select { width: 100%; min-width: 0; }
+.txt { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); background: var(--surface); min-width: 0; width: 100%; }
+.txt::placeholder { color: var(--ink-3); }
+.icon-btn {
+  width: 34px; height: 34px; border-radius: 7px; border: 1px solid transparent; background: transparent;
+  color: var(--ink-3); cursor: pointer; font-size: 18px; line-height: 1;
+}
+.icon-btn:hover { color: var(--ink); border-color: var(--rule); }
+.act-add { padding-top: 10px; border-top: 1px dashed var(--rule); }
+.act-add .btn { justify-content: center; padding-inline: 8px; }
+.toast button { margin-left: 12px; background: none; border: 0; color: var(--hl); font-weight: 600; cursor: pointer; padding: 0; }
+
 /* Skeleton */
 .skel .strip { background: var(--grid); }
 .skel .slots span { display: inline-block; width: 120px; height: 30px; border-radius: 6px; background: var(--grid); }
@@ -206,6 +242,10 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   .day-total { margin-top: 0; grid-column: 2; grid-row: 1 / span 2; align-self: center; }
   .allday { grid-column: 1 / -1; margin-top: 4px; }
   .evlist li { grid-template-columns: 1fr; gap: 0; }
+  .prow { grid-template-columns: 1fr; }
+  .ptime { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .act-row, .act-add { grid-template-columns: 1fr 1fr 40px; }
+  .act-row .txt, .act-add .txt { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) { .spin svg { animation: none; } }
 </style>
@@ -244,6 +284,21 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       <span><i class="lm"></i>Maybe (not counted)</span>
       <span id="legendBuf"></span>
     </div>
+  </section>
+
+  <section class="acts-sec" aria-labelledby="actsTitle">
+    <div class="sec-head">
+      <h2 id="actsTitle">Things to fit in</h2>
+      <p class="fine">Each open block gets a plan from this list. The longest activities go into the blocks they fit best. Leftover time then gets anything you do once a day that isn't planned yet that day, plus one session of anything set to every open block.</p>
+    </div>
+    <p class="fine" id="actsNote" hidden></p>
+    <div class="acts" id="acts"></div>
+    <form class="act-add" id="actAdd" autocomplete="off">
+      <input class="txt" id="newName" type="text" placeholder="Add something, like “Call home”" maxlength="60" aria-label="Activity name" required>
+      <select id="newMin" aria-label="How long it takes"></select>
+      <select id="newRep" aria-label="How often"></select>
+      <button class="btn" type="submit" aria-label="Add activity">Add</button>
+    </form>
   </section>
 
   <details class="settings" id="settings">
@@ -295,9 +350,13 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   const DENIALS = new Set(["needs_reauth","server_not_connected","selection_required","server_not_found","blocked_by_policy","approval_required","not_in_manifest","not_granted","capability_disabled","capability_removed","consent_required","user_changed"]);
 
   // ---------- settings (per-browser convenience) ----------
-  const DEFAULTS = { startH: 8, endH: 22, buffer: 10, minSlot: 30, countMaybe: false, hidden: [] };
+  const DEFAULTS = { v: 2, startH: 9, endH: 22, buffer: 10, minSlot: 30, countMaybe: false, hidden: [] };
   function loadSettings() {
-    try { const s = JSON.parse(localStorage.getItem("ct.settings") || "{}"); return { ...DEFAULTS, ...s, hidden: Array.isArray(s.hidden) ? s.hidden : [] }; }
+    try {
+      const s = JSON.parse(localStorage.getItem("ct.settings") || "{}");
+      if (s.v !== 2) { delete s.startH; s.v = 2; }   // day now starts at 9am by default
+      return { ...DEFAULTS, ...s, hidden: Array.isArray(s.hidden) ? s.hidden : [] };
+    }
     catch { return { ...DEFAULTS }; }
   }
   function saveSettings() { try { localStorage.setItem("ct.settings", JSON.stringify(S)); } catch {} }
@@ -313,6 +372,19 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   let anchor = dayKey(new Date());
   let retriedCalendars = false;
   let refreshing = false, refreshTimer = 0;
+  let DB = null;             // db namespace (activity list)
+  let acts = null;           // [{id, name, minutes, repeat, order}]
+  let actsState = "loading"; // loading | slow | ready | error | none | example
+
+  const REPEATS = [["once", "Once in 3 days"], ["daily", "Once a day"], ["anytime", "Every open block"]];
+  const DURS = [15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 240];
+  const EXAMPLE_ACTS = [
+    { id: "gym", name: "Gym (off campus)", minutes: 90, repeat: "daily", order: 1 },
+    { id: "pool", name: "Pool (on campus)", minutes: 60, repeat: "daily", order: 2 },
+    { id: "study", name: "Study", minutes: 45, repeat: "anytime", order: 3 },
+    { id: "coffee", name: "Coffee with a friend", minutes: 45, repeat: "once", order: 4 },
+    { id: "laundry", name: "Laundry", minutes: 90, repeat: "once", order: 5 }
+  ];
 
   // ---------- dates ----------
   function dayStart(i) { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate() + i); }
@@ -407,6 +479,49 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       days.push({ i, d0, ws, we, events, free, allDay, total: free.reduce((t, f) => t + (f.end - f.start), 0) });
     }
     return days;
+  }
+
+  // ---------- suggestions: fit activities into open blocks ----------
+  // Pass 1: each activity once, longest first, into the block it fits most snugly (keeps big blocks for big things).
+  // Pass 2: fill what's left of each block with activities still allowed (daily: once per day; anytime: no limit).
+  function planDays(days) {
+    const list = (acts || []).filter(a => a.minutes > 0).map(a => ({ ...a, ms: a.minutes * MIN }))
+      .sort((x, y) => y.ms - x.ms || x.order - y.order);
+    const slots = [];
+    for (const d of days) for (const f of d.free) {
+      const s = { day: d.i, start: f.start, end: f.end, left: f.end - f.start, items: [] };
+      f.plan = s; slots.push(s);
+    }
+    const used = new Map(list.map(a => [a.id, new Set()]));
+    const place = (s, a) => { s.items.push(a); s.left -= a.ms; used.get(a.id).add(s.day); };
+    for (const a of list) {
+      let best = null;
+      for (const s of slots) if (s.left >= a.ms && (!best || s.left < best.left)) best = s;
+      if (best) place(best, a);
+    }
+    // Fill: daily things not yet planned that day first, then one session of an "as often as fits" activity per block.
+    for (const s of slots) {
+      for (;;) {
+        const a = list.find(a => a.ms <= s.left && a.repeat === "daily" && !used.get(a.id).has(s.day))
+               || list.find(a => a.ms <= s.left && a.repeat === "anytime" && !s.items.some(x => x.id === a.id));
+        if (!a) break;
+        place(s, a);
+      }
+    }
+    for (const s of slots) {
+      const groups = [];
+      for (const a of s.items) { const g = groups.find(g => g.id === a.id); if (g) g.ms += a.ms; else groups.push({ id: a.id, name: a.name, ms: a.ms }); }
+      let t = s.start.getTime();
+      s.steps = groups.map(g => { const st = { name: g.name, start: new Date(t), end: new Date(t + g.ms) }; t += g.ms; return st; });
+      s.spare = s.end.getTime() - t;
+      const full = s.end - s.start;
+      s.also = list.filter(a => a.ms <= full && !groups.some(g => g.id === a.id)).map(a => a.name);
+    }
+  }
+  function planPhrase(p) {
+    if (!p || !p.steps || !p.steps.length) return "";
+    const n = p.steps.map(s => `<b>${esc(s.name)}</b>`);
+    return n.length === 1 ? n[0] : `${n.slice(0, -1).join(", ")}, then ${n[n.length - 1]}`;
   }
 
   // ---------- example data (shown only when the calendar can't be reached) ----------
@@ -519,6 +634,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
 
     if (!data || !ready) { renderSkeleton(loaded, total); return; }
     const days = buildDays(data);
+    planDays(days);
     lastDays = days;
     renderHero(days, data);
     $("days").innerHTML = days.map(renderDay).join("");
@@ -599,22 +715,25 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
 
     if (cur && inWindow) {
       hl.innerHTML = `<mark>Free now</mark> until ${esc(fmtTime(cur.end))}`;
-      const nxt = nextEvent && nextEvent.start.getTime() - cur.end.getTime() <= (S.buffer + 1) * MIN ? `Next up: <b>${esc(nextEvent.title)}</b> at ${esc(fmtTime(nextEvent.start))}.` : "";
-      sub.innerHTML = `${esc(fmtDur(cur.end - now))} open. ${nxt}`;
+      const nxt = nextEvent && nextEvent.start.getTime() - cur.end.getTime() <= (S.buffer + 1) * MIN ? ` Next up: <b>${esc(nextEvent.title)}</b> at ${esc(fmtTime(nextEvent.start))}.` : "";
+      const pp = planPhrase(cur.plan);
+      sub.innerHTML = `${esc(fmtDur(cur.end - now))} open.${pp ? ` Good time for ${pp}.` : ""}${nxt}`;
       return;
     }
     const next = all.find(f => f.end > now && f.start >= now);
     const nextTxt = next ? `${relDay(next.day.i, next.day.d0)}, ${fmtRange(next.start, next.end)}` : "";
     if (busyNow && inWindow) {
       hl.innerHTML = `Busy until ${esc(fmtTime(busyNow.end))}`;
-      sub.innerHTML = `In <b>${esc(busyNow.title)}</b>. ${next ? `Next open: <b>${esc(nextTxt)}</b> (${esc(fmtDur(next.end - next.start))}).` : `No open time in the next ${DAYS} days.`}`;
+      const pp = next ? planPhrase(next.plan) : "";
+      sub.innerHTML = `In <b>${esc(busyNow.title)}</b>. ${next ? `Next open: <b>${esc(nextTxt)}</b> (${esc(fmtDur(next.end - next.start))})${pp ? `, good for ${pp}` : ""}.` : `No open time in the next ${DAYS} days.`}`;
       return;
     }
     if (next) {
       eb.textContent = mode === "example" ? "Next open · example" : "Next open block";
       const label = next.day.i === 0 ? fmtTime(next.start) : `${dayName(next.day.i, next.day.d0)}, ${fmtTime(next.start)}`;
       hl.innerHTML = `<mark>${esc(label)}</mark>`;
-      sub.innerHTML = `Open until ${esc(fmtTime(next.end))}, ${esc(fmtDur(next.end - next.start))}. ${inWindow ? "" : `Your day runs ${esc(hourLabel(S.startH))}–${esc(hourLabel(S.endH))}.`}`;
+      const pp = planPhrase(next.plan);
+      sub.innerHTML = `Open until ${esc(fmtTime(next.end))}, ${esc(fmtDur(next.end - next.start))}.${pp ? ` Good time for ${pp}.` : ""} ${inWindow ? "" : `Your day runs ${esc(hourLabel(S.startH))}–${esc(hourLabel(S.endH))}.`}`;
       return;
     }
     hl.textContent = `No open time in the next ${DAYS} days`;
@@ -624,8 +743,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   function scaleHtml() {
     const span = S.endH - S.startH, step = span > 10 ? 2 : 1;
     let out = "";
-    for (let h = S.startH; h <= S.endH; h += step) out += `<span style="left:${((h - S.startH) / span * 100).toFixed(3)}%">${hourLabel(h)}</span>`;
-    if ((S.endH - S.startH) % step) out += `<span style="left:100%">${hourLabel(S.endH)}</span>`;
+    for (let h = S.startH; h <= S.endH - step; h += step) out += `<span style="left:${((h - S.startH) / span * 100).toFixed(3)}%">${hourLabel(h)}</span>`;
+    out += `<span style="left:100%">${hourLabel(S.endH)}</span>`;
     return `<div class="scale" aria-hidden="true">${out}</div>`;
   }
 
@@ -645,10 +764,20 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     if (day.i === 0 && now >= day.ws && now <= day.we) strip += `<div class="nowline" style="left:${pct(now).toFixed(3)}%" title="Now"></div>`;
 
     const srText = day.free.length ? `Open: ${day.free.map(f => fmtRange(f.start, f.end)).join(", ")}` : "No open time";
+    const hasActs = acts && acts.length > 0;
     const slots = day.free.length
-      ? `<ul class="slots">${day.free.map(f => {
+      ? `<ul class="plan">${day.free.map(f => {
           const isNow = day.i === 0 && f.start.getTime() - now <= 5 * MIN && f.end > now;
-          return `<li class="slot${isNow ? " now-slot" : ""}"><span class="t">${esc(fmtRange(f.start, f.end))}</span><span class="d">${esc(fmtDur(f.end - f.start))}</span></li>`;
+          const p = f.plan || { steps: [], spare: 0, also: [] };
+          let body = "";
+          if (p.steps.length) {
+            body = `<ol class="steps">${p.steps.map(st => `<li class="step"><span class="sn">${esc(st.name)}</span><span class="st">${esc(fmtRange(st.start, st.end))}</span></li>`).join("")}</ol>`;
+            if (p.spare >= 15 * MIN) body +=`<span class="spare">+${esc(fmtDur(p.spare))} to spare</span>`;
+          } else if (hasActs) {
+            body = `<span class="spare">Too short for anything on your list. A good break.</span>`;
+          }
+          if (p.also.length) body += `<span class="also">Also fits: ${p.also.map(esc).join(", ")}</span>`;
+          return `<li class="prow${isNow ? " now-slot" : ""}"><div class="ptime"><span class="t">${esc(fmtRange(f.start, f.end))}</span><span class="d">${esc(fmtDur(f.end - f.start))} open</span></div><div class="pbody">${body}</div></li>`;
         }).join("")}</ul>`
       : `<p class="none">${day.i === 0 && now >= day.we ? "Your day is over." : `No open blocks of ${S.minSlot} min or more.`}</p>`;
 
@@ -744,7 +873,124 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     }
   }
   let toastT = 0;
-  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600); }
+  function toast(msg, undo) {
+    const t = $("toast"); t.textContent = msg;
+    if (undo) {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "Undo";
+      b.addEventListener("click", () => { t.hidden = true; undo(); });
+      t.appendChild(b);
+    }
+    t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, undo ? 6000 : 2600);
+  }
+
+  // ---------- activity list ----------
+  function normAct(id, d) {
+    if (!d || typeof d.name !== "string" || !d.name.trim()) return null;
+    const minutes = Math.round(+d.minutes);
+    if (!(minutes > 0)) return null;
+    const repeat = REPEATS.some(r => r[0] === d.repeat) ? d.repeat : "daily";
+    return { id, name: d.name.trim().slice(0, 60), minutes, repeat, order: +d.order || 0 };
+  }
+  function durOptions(sel) {
+    const list = DURS.includes(sel) ? DURS : [...DURS, sel].sort((a, b) => a - b);
+    return list.map(m => `<option value="${m}"${m === sel ? " selected" : ""}>${esc(fmtDur(m * MIN))}</option>`).join("");
+  }
+  function repOptions(sel) { return REPEATS.map(([v, l]) => `<option value="${v}"${v === sel ? " selected" : ""}>${esc(l)}</option>`).join(""); }
+
+  function renderActs() {
+    const box = $("acts"), note = $("actsNote");
+    const fid = document.activeElement && document.activeElement.id;
+    const notes = {
+      loading: "Loading your list…",
+      slow: "Your list can't be reached yet. Suggestions appear once it loads.",
+      error: "Your list stopped syncing. Reload the page to try again.",
+      none: "Your list can't be saved in this view. Open the page in claude.ai to keep changes.",
+      example: "Example list. Changes here aren't saved."
+    };
+    const n = notes[actsState] || "";
+    note.textContent = n; note.hidden = !n;
+    if (acts && acts.length) {
+      box.innerHTML = acts.map(a => `<div class="act-row" data-id="${esc(a.id)}">
+          <input class="txt" id="an-${esc(a.id)}" data-f="name" type="text" maxlength="60" value="${esc(a.name)}" aria-label="Activity name">
+          <select id="am-${esc(a.id)}" data-f="minutes" aria-label="How long ${esc(a.name)} takes">${durOptions(a.minutes)}</select>
+          <select id="ar-${esc(a.id)}" data-f="repeat" aria-label="How often to suggest ${esc(a.name)}">${repOptions(a.repeat)}</select>
+          <button class="icon-btn" type="button" data-del="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">×</button>
+        </div>`).join("");
+    } else {
+      box.innerHTML = (actsState === "ready" || actsState === "none") ? `<p class="none">Nothing on your list yet. Add the things you want to fit in, like the gym or laundry, and each open block will get a suggestion.</p>` : "";
+    }
+    if (fid) { const el = document.getElementById(fid); if (el && el !== document.activeElement) el.focus(); }
+  }
+
+  function dbErrMsg(e) {
+    const c = e && e.code;
+    if (c === "invalid_argument") return "Only the page's owner can change this list.";
+    if (c === "quota_exceeded") return "Your list is full. Remove something first.";
+    return "Couldn't save that change. Try again.";
+  }
+  function localApply(fn) { fn(); acts.sort((a, b) => a.order - b.order); renderActs(); render(); }
+
+  async function updateAct(id, patch) {
+    const a = acts && acts.find(x => x.id === id); if (!a) return;
+    if (!DB) return localApply(() => Object.assign(a, patch));
+    try { await DB.doc("activities/" + id).update(patch); } catch (e) { toast(dbErrMsg(e)); renderActs(); }
+  }
+  async function removeAct(id) {
+    const a = acts && acts.find(x => x.id === id); if (!a) return;
+    const body = { name: a.name, minutes: a.minutes, repeat: a.repeat, order: a.order };
+    const restore = async () => {
+      if (!DB) return localApply(() => acts.push({ id, ...body }));
+      try { await DB.doc("activities/" + id).set(body); } catch (e) { toast(dbErrMsg(e)); }
+    };
+    if (!DB) { localApply(() => { acts = acts.filter(x => x.id !== id); }); toast(`Removed ${a.name}`, restore); return; }
+    try { await DB.doc("activities/" + id).delete(); toast(`Removed ${a.name}`, restore); } catch (e) { toast(dbErrMsg(e)); }
+  }
+  async function addAct(name, minutes, repeat) {
+    const body = { name, minutes, repeat, order: Date.now() };
+    if (!DB) { localApply(() => acts.push({ id: "local-" + body.order, ...body })); return true; }
+    try { await DB.collection("activities").add(body); return true; } catch (e) { toast(dbErrMsg(e)); return false; }
+  }
+
+  function bindActs() {
+    $("newMin").innerHTML = durOptions(45);
+    $("newRep").innerHTML = repOptions("daily");
+    $("acts").addEventListener("change", e => {
+      const row = e.target.closest(".act-row"); const f = e.target.getAttribute("data-f");
+      if (!row || !f) return;
+      const id = row.getAttribute("data-id");
+      if (f === "name") { const v = e.target.value.trim().slice(0, 60); if (v) updateAct(id, { name: v }); else renderActs(); }
+      else if (f === "minutes") updateAct(id, { minutes: +e.target.value });
+      else if (f === "repeat") updateAct(id, { repeat: e.target.value });
+    });
+    $("acts").addEventListener("click", e => {
+      const b = e.target.closest("[data-del]"); if (b) removeAct(b.getAttribute("data-del"));
+    });
+    $("actAdd").addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = $("newName").value.trim().slice(0, 60);
+      if (!name || !acts) return;
+      const ok = await addAct(name, +$("newMin").value, $("newRep").value);
+      if (ok) { $("newName").value = ""; $("newName").focus(); }
+    });
+  }
+
+  async function bootDb() {
+    let db = null;
+    try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch { db = null; }
+    if (!db) {
+      if (mode === "example") { acts = EXAMPLE_ACTS.map(a => ({ ...a })); actsState = "example"; }
+      else { acts = []; actsState = "none"; }
+      renderActs(); render(); return;
+    }
+    DB = db;
+    const slow = setTimeout(() => { if (actsState === "loading") { actsState = "slow"; renderActs(); } }, 10000);
+    db.collection("activities").orderBy("order").onSnapshot(snap => {
+      acts = snap.docs.filter(d => d.exists).map(d => normAct(d.id, d.data())).filter(Boolean);
+      if (!snap.metadata.fromCache) clearTimeout(slow);
+      actsState = "ready";
+      renderActs(); scheduleRender();
+    }, () => { clearTimeout(slow); actsState = "error"; renderActs(); });
+  }
 
   // ---------- clock ----------
   setInterval(() => {
@@ -756,11 +1002,14 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   // ---------- boot ----------
   async function boot() {
     bind();
+    bindActs();
+    renderActs();
     render();
     let mcp = null;
     try { mcp = window.claude && window.claude.use ? await window.claude.use("mcp") : null; } catch { mcp = null; }
-    if (!mcp) { mode = "example"; render(); return; }
+    if (!mcp) { mode = "example"; render(); bootDb(); return; }
     M = mcp;
+    bootDb();
     loadCalendars();
   }
   boot();
