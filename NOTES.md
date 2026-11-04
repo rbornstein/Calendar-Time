@@ -31,6 +31,9 @@ Live page: https://claude.ai/artifact/RBFSvFPhzKhjNqMdxM6wiW (source: `index.htm
 - Travel time connectors: Uber (price/time estimates, probably "now" only) and TomTom Maps or Mapbox (traffic-aware routing for later departure times). Add them to the page's `mcp` capability once connected.
   - Uber connector tested Nov 4 2026 (`get_estimates_between_two_locations_claude`, home → UTC club): it worked, but the result only shows an interactive widget in chat. Claude gets back the names of the two places and no price, ETA, or ride time. It also only covers rides right now (no future times). So it can't feed the trip math. Use it for booking links only; ride times have to come from a routing connector (TomTom/Mapbox).
   - Uber matched "9165 Pharmacy Dr" to "9165 Pharmacy Ln". Check the pickup pin in the widget.
+  - Also tested in Claude Chat (Nov 4): Claude got back only "Found 8 ride options from '9165 Pharmacy Ln' to '24 Hour Fitness'", with no names, prices or pickup times. Prices go only to the card a person sees. So no automation (Claude Chat or Claude Code) can collect Uber prices through this connector. A scheduled price-checking task was considered and dropped for this reason.
+  - Usual gym windows from the calendar (Nov 2026): Mon 9am–1:30pm and after 6:30pm; Tue 9–11:30am and 3:30pm on; Wed 1–4:30pm and after 6:30pm; Thu 9am–1:30pm and 3:30–6:30pm; Fri 1pm on; Sat/Sun most of the day.
+  - Real prices option: read Uber receipt emails in Gmail (price, route, pickup time) and average them per route and time window. Not checked yet whether there are enough receipts.
 
 ## Later
 - ClassPass cycling classes within 10 miles of 9450 Gilman Dr. ClassPass blocks automated access, so this needs the user's own browser (Claude in Chrome or the Claude desktop app) or pasted results.
