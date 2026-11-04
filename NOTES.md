@@ -37,5 +37,13 @@ Live page: https://claude.ai/artifact/RBFSvFPhzKhjNqMdxM6wiW (source: `index.htm
   - Coordinates (lon, lat): home [-117.23546, 32.87222] (TomTom and Uber both call it 9165 Pharmacy **Lane**); UTC club [-117.211725, 32.871085].
   - Real prices option: read Uber receipt emails in Gmail (price, route, pickup time) and average them per route and time window. Not checked yet whether there are enough receipts.
 
+## Built Nov 4: gym trips
+- Activities have a `place` field ("" or a club id: utc, balboa, miramar, pb). The "Ride to" dropdown on each activity sets it. The gym activity is set to `utc`.
+- For a trip activity, its length = time at the gym. The planner puts a trip only into an empty open block and leaves at the block start: request Uber → pickup wait → ride there → work out → shower at the gym → pickup wait → ride home.
+- Pickup wait (default 8 min) and shower (default 15 min) are in Settings (saved per browser).
+- Ride times: the page calls TomTom Maps `tomtom-routing` itself (declared in the page's `mcp` capability), with historical traffic for the departure time rounded to 15 min, or live traffic if leaving now. Results are cached 12 h. Until TomTom answers, or if it can't, the page shows a rough estimate marked with *.
+- Each trip has "Book Uber there" / "Book Uber home" links (m.uber.com universal links with pickup and dropoff filled in).
+- Not done yet: 24 Hour Fitness class schedules (the trip uses the open block's start, not a class time).
+
 ## Later
 - ClassPass cycling classes within 10 miles of 9450 Gilman Dr. ClassPass blocks automated access, so this needs the user's own browser (Claude in Chrome or the Claude desktop app) or pasted results.

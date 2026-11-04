@@ -191,6 +191,12 @@ details.evs summary:hover { color: var(--ink); }
 .step .sn { font-weight: 600; font-size: 14px; }
 .step .st { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .spare, .also { font-size: 12px; color: var(--ink-3); }
+.trip { display: flex; flex-wrap: wrap; gap: 3px 12px; align-items: baseline; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.trip b { color: var(--ink); font-weight: 600; }
+.trip a { color: var(--focus); font-weight: 600; text-decoration: none; }
+.trip a:hover { text-decoration: underline; }
+.trip .est { flex-basis: 100%; color: var(--ink-3); font-size: 12px; }
+.trip .est button { margin-left: 8px; background: none; border: 0; padding: 0; color: var(--focus); font-weight: 600; cursor: pointer; font-size: 12px; }
 
 /* Activities */
 .acts-sec { display: grid; gap: 14px; border-top: 1px solid var(--rule); padding-top: 22px; }
@@ -199,7 +205,7 @@ details.evs summary:hover { color: var(--ink); }
 .acts { display: grid; gap: 8px; }
 .check.ex { align-items: center; font-size: 13px; }
 .check.ex input { margin-top: 0; }
-.act-row, .act-add { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em 11em auto 40px; gap: 8px; align-items: center; }
+.act-row, .act-add { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em 11em 11em auto 40px; gap: 8px; align-items: center; }
 .act-row select, .act-add select { width: 100%; min-width: 0; }
 .txt { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); background: var(--surface); min-width: 0; width: 100%; }
 .txt::placeholder { color: var(--ink-3); }
@@ -263,12 +269,13 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   .evlist li { grid-template-columns: 1fr; gap: 0; }
   .prow { grid-template-columns: 1fr; }
   .ptime { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-  .act-row, .act-add { grid-template-columns: 1fr 1fr auto; grid-template-areas: "name name del" "dur rep ex"; }
+  .act-row, .act-add { grid-template-columns: 1fr 1fr auto; grid-template-areas: "name name del" "dur rep rep" "place place ex"; }
   .act-row > :nth-child(1), .act-add > :nth-child(1) { grid-area: name; }
   .act-row > :nth-child(2), .act-add > :nth-child(2) { grid-area: dur; }
   .act-row > :nth-child(3), .act-add > :nth-child(3) { grid-area: rep; }
-  .act-row > :nth-child(4), .act-add > :nth-child(4) { grid-area: ex; }
-  .act-row > :nth-child(5), .act-add > :nth-child(5) { grid-area: del; justify-self: end; }
+  .act-row > :nth-child(4), .act-add > :nth-child(4) { grid-area: place; }
+  .act-row > :nth-child(5), .act-add > :nth-child(5) { grid-area: ex; }
+  .act-row > :nth-child(6), .act-add > :nth-child(6) { grid-area: del; justify-self: end; }
 }
 @media (prefers-reduced-motion: reduce) { .spin svg { animation: none; } }
 </style>
@@ -313,7 +320,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   <section class="acts-sec" aria-labelledby="actsTitle">
     <div class="sec-head">
       <h2 id="actsTitle">Things to fit in</h2>
-      <p class="fine">Each open block gets a plan from this list. The longest activities go into the blocks they fit best. Leftover time then gets anything you do once a day that isn't planned yet that day, plus one session of anything set to every open block. Activities ticked as exercise are suggested at most once a day in total, so a gym day isn't also a pool day.</p>
+      <p class="fine">Each open block gets a plan from this list. The longest activities go into the blocks they fit best. Leftover time then gets anything you do once a day that isn't planned yet that day, plus one session of anything set to every open block. Activities ticked as exercise are suggested at most once a day in total, so a gym day isn't also a pool day. Pick a gym under “Uber to” and the plan adds the whole trip: the pickup wait, the ride there and back with traffic for that time (from TomTom Maps), and a shower at the gym. For those, the length is your time at the gym.</p>
     </div>
     <p class="fine" id="actsNote" hidden></p>
     <div class="acts" id="acts"></div>
@@ -321,6 +328,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       <input class="txt" id="newName" type="text" placeholder="Add something, like “Call home”" maxlength="60" aria-label="Activity name" required>
       <select id="newMin" aria-label="How long it takes"></select>
       <select id="newRep" aria-label="How often"></select>
+      <select id="newPlace" aria-label="Where it is"></select>
       <label class="check ex"><input type="checkbox" id="newEx"><span>Exercise</span></label>
       <button class="btn" type="submit" aria-label="Add activity">Add</button>
     </form>
@@ -352,6 +360,19 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
         </select>
       </div>
       <div class="field">
+        <label for="wait">Uber pickup wait</label>
+        <select id="wait">
+          <option value="5">5 min</option><option value="8">8 min</option><option value="10">10 min</option><option value="15">15 min</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="shower">Shower at the gym</label>
+        <select id="shower">
+          <option value="0">No shower</option><option value="10">10 min</option><option value="15">15 min</option>
+          <option value="20">20 min</option><option value="30">30 min</option>
+        </select>
+      </div>
+      <div class="field">
         <span class="lbl">Maybe events</span>
         <label class="check"><input type="checkbox" id="countMaybe">
           <span>Count as busy<small>Invites you haven't accepted, or answered "maybe".</small></span></label>
@@ -375,7 +396,17 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   const DENIALS = new Set(["needs_reauth","server_not_connected","selection_required","server_not_found","blocked_by_policy","approval_required","not_in_manifest","not_granted","capability_disabled","capability_removed","consent_required","user_changed"]);
 
   // ---------- settings (per-browser convenience) ----------
-  const DEFAULTS = { v: 2, startH: 9, endH: 22, buffer: 10, minSlot: 30, countMaybe: false, hidden: [], calModes: {} };
+  const DEFAULTS = { v: 2, startH: 9, endH: 22, buffer: 10, minSlot: 30, countMaybe: false, hidden: [], calModes: {}, wait: 8, shower: 15 };
+
+  // ---------- places ([longitude, latitude]) ----------
+  const TT = "TomTom Maps";
+  const HOME = { pos: [-117.23546, 32.87222] };   // 9165 Pharmacy Ln, La Jolla
+  const CLUBS = {
+    utc:     { name: "24 Hour Fitness UTC",           short: "UTC",           pos: [-117.211725, 32.871085] },
+    balboa:  { name: "24 Hour Fitness Balboa",        short: "Balboa",        pos: [-117.158231, 32.820941] },
+    miramar: { name: "24 Hour Fitness Miramar",       short: "Miramar",       pos: [-117.122316, 32.894272] },
+    pb:      { name: "24 Hour Fitness Pacific Beach", short: "Pacific Beach", pos: [-117.253211, 32.796785] }
+  };
   function loadSettings() {
     try {
       const s = JSON.parse(localStorage.getItem("ct.settings") || "{}");
@@ -404,7 +435,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   const REPEATS = [["once", "Once in 3 days"], ["daily", "Once a day"], ["anytime", "Every open block"]];
   const DURS = [15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 240];
   const EXAMPLE_ACTS = [
-    { id: "gym", name: "Gym (off campus)", minutes: 90, repeat: "daily", order: 1, group: "exercise" },
+    { id: "gym", name: "Gym (off campus)", minutes: 90, repeat: "daily", order: 1, group: "exercise", place: "utc" },
     { id: "pool", name: "Pool (on campus)", minutes: 60, repeat: "daily", order: 2, group: "exercise" },
     { id: "study", name: "Study", minutes: 45, repeat: "anytime", order: 3 },
     { id: "coffee", name: "Coffee with a friend", minutes: 45, repeat: "once", order: 4 },
@@ -521,12 +552,75 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     return days;
   }
 
+  // ---------- rides: TomTom Maps routing with traffic for the departure time ----------
+  // Ride times are keyed by gym, direction and departure (rounded to 15 min). Until TomTom answers,
+  // a rough estimate from straight-line distance is used and marked as such.
+  const rides = new Map();      // key -> {sec} | {err}
+  const rideFlight = new Set();
+  let rideErr = null;
+  function estRideMs(club) {
+    const a = HOME.pos, b = CLUBS[club].pos;
+    const kx = 111.32 * Math.cos((a[1] + b[1]) / 2 * Math.PI / 180), ky = 110.57;
+    const km = Math.hypot((a[0] - b[0]) * kx, (a[1] - b[1]) * ky);
+    return Math.ceil(km * 1.7 / 30 * 60 + 4) * MIN;
+  }
+  function rideKey(club, dir, depart) {
+    const live = depart <= Date.now() + 5 * MIN;
+    const t = live ? 0 : Math.round(depart / (15 * MIN)) * 15 * MIN;
+    return { key: `${club}|${dir}|${live ? "now" : t}`, t, live };
+  }
+  function ride(club, dir, depart, fetch) {
+    const k = rideKey(club, dir, depart);
+    const r = rides.get(k.key);
+    if (r && r.sec) return { ms: Math.ceil(r.sec / 60) * MIN, exact: true };
+    if (!r && fetch) fetchRide(club, dir, k, false);
+    return { ms: estRideMs(club), exact: false };
+  }
+  async function fetchRide(club, dir, k, retried) {
+    if (!M || rideFlight.has(k.key)) return;
+    rideFlight.add(k.key);
+    const gym = CLUBS[club].pos;
+    const input = { locations: dir === "there" ? [HOME.pos, gym] : [gym, HOME.pos], traffic: k.live ? "live" : "historical" };
+    if (!k.live) input.departAt = new Date(k.t).toISOString();
+    try {
+      const r = await M.callTool(TT, "tomtom-routing", input, { cache: { staleTime: (k.live ? 10 : 12 * 60) * MIN, gcTime: 7 * 24 * 60 * MIN } });
+      const p = r.payload || {};
+      const f = Array.isArray(p.features) ? p.features[0] : null;
+      const sec = f && f.properties && f.properties.summary && f.properties.summary.travelTimeInSeconds;
+      if (typeof sec === "number" && sec > 0) { rides.set(k.key, { sec }); rideErr = null; }
+      else { rides.set(k.key, { err: { code: "tool_error" } }); rideErr = { code: "tool_error" }; }
+    } catch (e) {
+      rideFlight.delete(k.key);
+      if (e && e.retryable && !retried) { setTimeout(() => fetchRide(club, dir, k, true), (e.retryAfterMs ?? 1500) + Math.random() * 1000); return; }
+      rides.set(k.key, { err: e || { code: "upstream_error" } });
+      rideErr = e || { code: "upstream_error" };
+    }
+    rideFlight.delete(k.key);
+    scheduleRender();
+  }
+  function retryRides() { for (const [k, v] of rides) if (v.err) rides.delete(k); rideErr = null; render(); }
+
+  // A gym trip starts when the block starts: request the Uber, wait, ride, work out, shower, wait, ride home.
+  function tripFor(a, start, fetch) {
+    const wait = S.wait * MIN, t0 = start.getTime();
+    const there = ride(a.place, "there", t0 + wait, fetch);
+    const atGym = t0 + wait + there.ms;
+    const workEnd = atGym + a.minutes * MIN;
+    const showerEnd = workEnd + S.shower * MIN;
+    const back = ride(a.place, "back", showerEnd + wait, fetch);
+    const home = showerEnd + wait + back.ms;
+    return { club: a.place, request: t0, atGym, workEnd, showerEnd, home, there, back, ms: home - t0 };
+  }
+  const isTrip = a => !!(a.place && CLUBS[a.place]);
+
   // ---------- suggestions: fit activities into open blocks ----------
   // Pass 1: each activity once, longest first, into the block it fits most snugly (keeps big blocks for big things).
   // Pass 2: fill what's left of each block with activities still allowed (daily: once per day; anytime: no limit).
+  // A gym trip only goes into an empty block, so it always leaves at the start of the block.
   function planDays(days) {
     const list = (acts || []).filter(a => a.minutes > 0).map(a => ({ ...a, ms: a.minutes * MIN }))
-      .sort((x, y) => y.ms - x.ms || x.order - y.order);
+      .map(a => ({ ...a, sortMs: isTrip(a) ? tripFor(a, new Date(), false).ms : a.ms }))
+      .sort((x, y) => y.sortMs - x.sortMs || x.order - y.order);
     const slots = [];
     for (const d of days) for (const f of d.free) {
       const s = { day: d.i, start: f.start, end: f.end, left: f.end - f.start, items: [] };
@@ -535,33 +629,71 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const used = new Map(list.map(a => [a.id, new Set()]));
     const groupDays = new Map();   // group -> Set(day): only one exercise per day
     const groupOk = (a, day) => !a.group || !(groupDays.get(a.group) && groupDays.get(a.group).has(day));
+    const fits = (a, s) => isTrip(a) ? !s.items.length && tripFor(a, s.start, false).ms <= s.left : a.ms <= s.left;
     const place = (s, a) => {
-      s.items.push(a); s.left -= a.ms; used.get(a.id).add(s.day);
+      const trip = isTrip(a) ? tripFor(a, s.start, true) : null;
+      const ms = trip ? trip.ms : a.ms;
+      s.items.push({ ...a, ms, trip }); s.left -= ms; used.get(a.id).add(s.day);
       if (a.group) { if (!groupDays.has(a.group)) groupDays.set(a.group, new Set()); groupDays.get(a.group).add(s.day); }
     };
     for (const a of list) {
       let best = null;
-      for (const s of slots) if (s.left >= a.ms && groupOk(a, s.day) && (!best || s.left < best.left)) best = s;
+      for (const s of slots) if (fits(a, s) && groupOk(a, s.day) && (!best || s.left < best.left)) best = s;
       if (best) place(best, a);
     }
     // Fill: daily things not yet planned that day first, then one session of an "as often as fits" activity per block.
     for (const s of slots) {
       for (;;) {
-        const a = list.find(a => a.ms <= s.left && a.repeat === "daily" && !used.get(a.id).has(s.day) && groupOk(a, s.day))
-               || list.find(a => a.ms <= s.left && a.repeat === "anytime" && !s.items.some(x => x.id === a.id) && groupOk(a, s.day));
+        const a = list.find(a => fits(a, s) && a.repeat === "daily" && !used.get(a.id).has(s.day) && groupOk(a, s.day))
+               || list.find(a => fits(a, s) && a.repeat === "anytime" && !s.items.some(x => x.id === a.id) && groupOk(a, s.day));
         if (!a) break;
         place(s, a);
       }
     }
     for (const s of slots) {
       const groups = [];
-      for (const a of s.items) { const g = groups.find(g => g.id === a.id); if (g) g.ms += a.ms; else groups.push({ id: a.id, name: a.name, ms: a.ms }); }
+      for (const a of s.items) { const g = groups.find(g => g.id === a.id); if (g) g.ms += a.ms; else groups.push({ id: a.id, name: a.name, ms: a.ms, trip: a.trip }); }
       let t = s.start.getTime();
-      s.steps = groups.map(g => { const st = { name: g.name, start: new Date(t), end: new Date(t + g.ms) }; t += g.ms; return st; });
+      s.steps = groups.map(g => { const st = { name: g.name, start: new Date(t), end: new Date(t + g.ms), trip: g.trip }; t += g.ms; return st; });
       s.spare = s.end.getTime() - t;
       const full = s.end - s.start;
-      s.also = list.filter(a => a.ms <= full && !groups.some(g => g.id === a.id)).map(a => a.name);
+      s.also = list.filter(a => (isTrip(a) ? tripFor(a, s.start, false).ms : a.ms) <= full && !groups.some(g => g.id === a.id)).map(a => a.name);
     }
+  }
+
+  function uberLink(from, to, toName) {
+    const q = new URLSearchParams({ action: "setPickup", "pickup[latitude]": from[1], "pickup[longitude]": from[0],
+      "dropoff[latitude]": to[1], "dropoff[longitude]": to[0], "dropoff[nickname]": toName });
+    return "https://m.uber.com/ul/?" + q.toString();
+  }
+  function rideNote() {
+    const c = rideErr && rideErr.code;
+    if (!M) return "Ride times are rough estimates. Open this page in claude.ai with TomTom Maps connected for times with traffic.";
+    if (c === "server_not_connected" || c === "server_not_found") return "Ride times are rough estimates: TomTom Maps isn't connected. Add it in claude.ai Settings → Connectors.";
+    if (c === "needs_reauth") return "Ride times are rough estimates: your TomTom Maps connection expired. Reconnect it in claude.ai Settings → Connectors.";
+    if (c === "selection_required") return "Ride times are rough estimates: choose which TomTom Maps connector this page should use when claude.ai asks.";
+    if (c === "blocked_by_policy") return "Ride times are rough estimates: your organization blocks TomTom Maps here.";
+    if (c === "not_in_manifest" || c === "consent_required" || c === "approval_required") return `Ride times are rough estimates: TomTom Maps isn't allowed for this page.<button type="button" data-act="tt-retry">Allow TomTom</button>`;
+    if (c === "not_granted" || c === "capability_disabled" || c === "capability_removed") return "Ride times are rough estimates: this view can't use connectors.";
+    if (c) return `Ride times are rough estimates: TomTom Maps didn't answer.<button type="button" data-act="tt-retry">Try again</button>`;
+    return "Rough ride estimate while TomTom Maps checks traffic…";
+  }
+  function tripHtml(t) {
+    const c = CLUBS[t.club];
+    const d = x => esc(fmtTime(new Date(x)));
+    const mins = r => `${Math.round(r.ms / MIN)} min${r.exact ? "" : "*"}`;
+    const exact = t.there.exact && t.back.exact;
+    return `<div class="trip">
+        <span>Request Uber <b>${d(t.request)}</b></span>
+        <span>${esc(mins(t.there))} ride to ${esc(c.short)}</span>
+        <span>Work out <b>${esc(fmtRange(new Date(t.atGym), new Date(t.workEnd)))}</b></span>
+        ${t.showerEnd > t.workEnd ? `<span>Shower until ${d(t.showerEnd)}</span>` : ""}
+        <span>Uber home <b>${d(t.showerEnd)}</b>, ${esc(mins(t.back))} ride</span>
+        <span>Home about ${d(t.home)}</span>
+        <a href="${esc(uberLink(HOME.pos, c.pos, c.name))}" target="_blank" rel="noopener">Book Uber there</a>
+        <a href="${esc(uberLink(c.pos, HOME.pos, "Home"))}" target="_blank" rel="noopener">Book Uber home</a>
+        ${exact ? "" : `<span class="est">* ${rideNote()}</span>`}
+      </div>`;
   }
   function planPhrase(p) {
     if (!p || !p.steps || !p.steps.length) return "";
@@ -844,6 +976,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
           let body = "";
           if (p.steps.length) {
             body = `<ol class="steps">${p.steps.map(st => `<li class="step"><span class="sn">${esc(st.name)}</span><span class="st">${esc(fmtRange(st.start, st.end))}</span></li>`).join("")}</ol>`;
+            body += p.steps.filter(st => st.trip).map(st => tripHtml(st.trip)).join("");
             if (p.spare >= 15 * MIN) body +=`<span class="spare">+${esc(fmtDur(p.spare))} to spare</span>`;
           } else if (hasActs) {
             body = `<span class="spare">Too short for anything on your list. A good break.</span>`;
@@ -907,12 +1040,15 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   function bind() {
     fillHours();
     $("buffer").value = S.buffer; $("minSlot").value = S.minSlot; $("countMaybe").checked = S.countMaybe;
+    $("wait").value = S.wait; $("shower").value = S.shower;
     const onChange = () => {
       S.startH = +$("startH").value; S.endH = +$("endH").value;
       S.buffer = +$("buffer").value; S.minSlot = +$("minSlot").value; S.countMaybe = $("countMaybe").checked;
+      S.wait = +$("wait").value; S.shower = +$("shower").value;
       saveSettings(); render();
     };
-    ["startH", "endH", "buffer", "minSlot", "countMaybe"].forEach(id => $(id).addEventListener("change", onChange));
+    ["startH", "endH", "buffer", "minSlot", "countMaybe", "wait", "shower"].forEach(id => $(id).addEventListener("change", onChange));
+    $("days").addEventListener("click", e => { if (e.target.closest("[data-act='tt-retry']")) retryRides(); });
     $("calList").addEventListener("change", e => {
       const id = e.target && e.target.getAttribute("data-cal"); if (!id) return;
       S.calModes = { ...S.calModes, [id]: e.target.value };
@@ -969,7 +1105,12 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     const minutes = Math.round(+d.minutes);
     if (!(minutes > 0)) return null;
     const repeat = REPEATS.some(r => r[0] === d.repeat) ? d.repeat : "daily";
-    return { id, name: d.name.trim().slice(0, 60), minutes, repeat, order: +d.order || 0, group: d.group === "exercise" ? "exercise" : "" };
+    return { id, name: d.name.trim().slice(0, 60), minutes, repeat, order: +d.order || 0, group: d.group === "exercise" ? "exercise" : "",
+      place: typeof d.place === "string" && CLUBS[d.place] ? d.place : "" };
+  }
+  function placeOptions(sel) {
+    return [["", "No ride"], ...Object.entries(CLUBS).map(([k, c]) => [k, `Uber to ${c.short}`])]
+      .map(([v, l]) => `<option value="${v}"${v === sel ? " selected" : ""}>${esc(l)}</option>`).join("");
   }
   function durOptions(sel) {
     const list = DURS.includes(sel) ? DURS : [...DURS, sel].sort((a, b) => a - b);
@@ -994,6 +1135,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
           <input class="txt" id="an-${esc(a.id)}" data-f="name" type="text" maxlength="60" value="${esc(a.name)}" aria-label="Activity name">
           <select id="am-${esc(a.id)}" data-f="minutes" aria-label="How long ${esc(a.name)} takes">${durOptions(a.minutes)}</select>
           <select id="ar-${esc(a.id)}" data-f="repeat" aria-label="How often to suggest ${esc(a.name)}">${repOptions(a.repeat)}</select>
+          <select id="ap-${esc(a.id)}" data-f="place" aria-label="Ride for ${esc(a.name)}">${placeOptions(a.place || "")}</select>
           <label class="check ex"><input type="checkbox" id="ax-${esc(a.id)}" data-f="group"${a.group === "exercise" ? " checked" : ""}><span>Exercise</span></label>
           <button class="icon-btn" type="button" data-del="${esc(a.id)}" aria-label="Remove ${esc(a.name)}">×</button>
         </div>`).join("");
@@ -1018,7 +1160,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   }
   async function removeAct(id) {
     const a = acts && acts.find(x => x.id === id); if (!a) return;
-    const body = { name: a.name, minutes: a.minutes, repeat: a.repeat, group: a.group || "", order: a.order };
+    const body = { name: a.name, minutes: a.minutes, repeat: a.repeat, group: a.group || "", place: a.place || "", order: a.order };
     const restore = async () => {
       if (!DB) return localApply(() => acts.push({ id, ...body }));
       try { await DB.doc("activities/" + id).set(body); } catch (e) { toast(dbErrMsg(e)); }
@@ -1026,8 +1168,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
     if (!DB) { localApply(() => { acts = acts.filter(x => x.id !== id); }); toast(`Removed ${a.name}`, restore); return; }
     try { await DB.doc("activities/" + id).delete(); toast(`Removed ${a.name}`, restore); } catch (e) { toast(dbErrMsg(e)); }
   }
-  async function addAct(name, minutes, repeat, group) {
-    const body = { name, minutes, repeat, group, order: Date.now() };
+  async function addAct(name, minutes, repeat, group, place) {
+    const body = { name, minutes, repeat, group, place, order: Date.now() };
     if (!DB) { localApply(() => acts.push({ id: "local-" + body.order, ...body })); return true; }
     try { await DB.collection("activities").add(body); return true; } catch (e) { toast(dbErrMsg(e)); return false; }
   }
@@ -1035,6 +1177,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
   function bindActs() {
     $("newMin").innerHTML = durOptions(45);
     $("newRep").innerHTML = repOptions("daily");
+    $("newPlace").innerHTML = placeOptions("");
     $("acts").addEventListener("change", e => {
       const row = e.target.closest(".act-row"); const f = e.target.getAttribute("data-f");
       if (!row || !f) return;
@@ -1043,6 +1186,7 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       else if (f === "minutes") updateAct(id, { minutes: +e.target.value });
       else if (f === "repeat") updateAct(id, { repeat: e.target.value });
       else if (f === "group") updateAct(id, { group: e.target.checked ? "exercise" : "" });
+      else if (f === "place") updateAct(id, { place: e.target.value });
     });
     $("acts").addEventListener("click", e => {
       const b = e.target.closest("[data-del]"); if (b) removeAct(b.getAttribute("data-del"));
@@ -1051,8 +1195,8 @@ select { padding: 7px 10px; border-radius: 7px; border: 1px solid var(--rule); b
       e.preventDefault();
       const name = $("newName").value.trim().slice(0, 60);
       if (!name || !acts) return;
-      const ok = await addAct(name, +$("newMin").value, $("newRep").value, $("newEx").checked ? "exercise" : "");
-      if (ok) { $("newName").value = ""; $("newEx").checked = false; $("newName").focus(); }
+      const ok = await addAct(name, +$("newMin").value, $("newRep").value, $("newEx").checked ? "exercise" : "", $("newPlace").value);
+      if (ok) { $("newName").value = ""; $("newEx").checked = false; $("newPlace").value = ""; $("newName").focus(); }
     });
   }
 
